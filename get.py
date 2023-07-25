@@ -73,7 +73,7 @@ def get_daily_col_info() -> pd.DataFrame:
         "lst_date": (
             "LST date",
             "",
-            "The Local Standard Time (LST) date of the observation",
+            "The Local Standard Time (LST) date of the observation.",
         ),
         "crx_vn": (
             "station datalogger version number",
@@ -373,7 +373,10 @@ if __name__ == "__main__":
     # df.to_parquet(fn, engine="fastparquet", compression="gzip")
     dfr = pd.read_parquet(fn, engine="fastparquet")
 
+    #
     # xarray
+    #
+
     df = dfr
     ds = (
         df.set_index(["wban", "lst_date"])
@@ -411,10 +414,23 @@ if __name__ == "__main__":
 
     # attrs
     for vn in ds.variables:
-        attrs = DAILY_ATTRS.get(vn if vn != "time" else "lst_date")
+        attrs = DAILY_ATTRS.get(vn)
         if attrs is None:
             if vn not in {"time", "depth"}:
                 warnings.warn(f"no attrs for {vn}")
             continue
         (long_name, units, description) = attrs
         ds[vn].attrs.update(long_name=long_name, units=units, description=description)
+    ds["time"].attrs.update(description=DAILY_ATTRS["lst_date"][2])
+
+    # lat/lon don't vary in time
+    lat0 = ds["latitude"].isel(time=0)
+    lon0 = ds["longitude"].isel(time=0)
+    assert (ds["latitude"] == lat0).all()
+    assert (ds["longitude"] == lon0).all()
+    ds["latitude"] = lat0
+    ds["longitude"] = lon0
+
+    # save
+    encoding = {vn: {"zlib": True, "complevel": 1} for vn in ds.data_vars if pd.api.types.is_float_dtype(ds[vn].dtype)}
+    ds.to_netcdf("crn_2020.nc", encoding=encoding)
