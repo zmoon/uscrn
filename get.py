@@ -226,10 +226,19 @@ def get_daily_col_info() -> pd.DataFrame:
         "Average soil temperature, in degrees C. See Notes I and J.",
     )
 
-    return (columns, attrs)
+    # Floats in the text files are represented with 7 chars only, little precision
+    dtypes = {c: np.float32 for c in columns}
+    dtypes["wban"] = str
+    del dtypes["lst_date"]
+    dtypes["crx_vn"] = str
+    dtypes["longitude"] = np.float64  # coords
+    dtypes["latitude"] = np.float64
+    dtypes["sur_temp_daily_type"] = str
+
+    return (columns, dtypes, attrs)
 
 
-(DAILY_COLS, DAILY_ATTRS) = get_daily_col_info()
+(DAILY_COLS, DAILY_DTYPES, DAILY_ATTRS) = get_daily_col_info()
 
 
 def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
@@ -238,15 +247,12 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     For example:
     https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/2010/CRND0103-2010-CO_Boulder_14_W.txt
     """
-    # columns, = get_daily_col_info()  # joblib has issues with the cached fn result
-    columns = DAILY_COLS
-
     df = pd.read_csv(
         fp,
         delim_whitespace=True,
         header=None,
-        names=columns,
-        dtype={0: str, 2: str},
+        names=DAILY_COLS,
+        dtype=DAILY_DTYPES,
         parse_dates=["lst_date"],
         date_format=r"%Y%m%d",
         na_values=[-99999, -9999],
@@ -262,7 +268,9 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     # Category cols?
     if cat:
         for col in ["sur_temp_daily_type"]:
-            df[col] = df[col].astype("category")
+            df[col] = df[col].astype(
+                pd.CategoricalDtype(categories=["R", "C", "U"], ordered=False)
+            )
 
     return df
 
@@ -432,5 +440,9 @@ if __name__ == "__main__":
     ds["longitude"] = lon0
 
     # save
-    encoding = {vn: {"zlib": True, "complevel": 1} for vn in ds.data_vars if pd.api.types.is_float_dtype(ds[vn].dtype)}
+    encoding = {
+        vn: {"zlib": True, "complevel": 1}
+        for vn in ds.data_vars
+        if pd.api.types.is_float_dtype(ds[vn].dtype)
+    }
     ds.to_netcdf("crn_2020.nc", encoding=encoding)
