@@ -119,6 +119,8 @@ def get_crn(
 
     base_url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01"
 
+    now = datetime.datetime.now(datetime.timezone.utc)
+
     # Get available years from the main page
     # e.g. `>2000/<`
     r = requests.get(f"{base_url}/")
@@ -185,9 +187,50 @@ def get_crn(
         for col in ["sur_temp_daily_type"]:
             df[col] = df[col].astype("category")
 
+    df.attrs.update(created=now)
+
     return df
 
 
 if __name__ == "__main__":
-    meta = load_meta(cat=True)
-    df = get_crn(2020, cat=True)
+    import xarray as xr
+
+    # meta = load_meta(cat=True)
+    # df = get_crn(2020, cat=True)
+
+    fn = "crn_2020.parquet.gz"
+    # df.to_parquet(fn, engine="fastparquet", compression="gzip")
+    dfr = pd.read_parquet(fn, engine="fastparquet")
+
+    # xarray
+    df = dfr
+    ds = (
+        df
+        .set_index(["wban", "lst_date"])
+        .to_xarray()
+        .swap_dims(wban="site")
+        .set_coords(["latitude", "longitude"])
+        .rename(lst_date="time")
+    )
+    # Combine vertically resolved variables
+    for pref in ["soil_moisture_", "soil_temp_"]:
+        vns = list(df.columns[df.columns.str.startswith(pref)])
+        depths = sorted(float(vn.split("_")[2]) for vn in vns)
+        vn_new_parts = vns[0].split("_")
+        del vn_new_parts[2]
+        vn_new = "_".join(vn_new_parts)
+
+        if "depth" not in ds:
+            ds["depth"] = ("depth", depths, {"long_name": "depth below surface", "units": "cm"})
+
+        vns_ = [f"{pref}{d:.0f}_daily" for d in depths]  # ensure sorted correctly
+        assert set(vns) == set(vns_)
+
+        # New var
+        ds[vn_new] = xr.concat([ds[vn] for vn in vns_], dim="depth")
+        ds = ds.drop_vars(vns_)
+
+    # float32
+    for vn in ds.data_vars:  # leave coords
+        if pd.api.types.is_float_dtype(ds[vn].dtype) and ds[vn].dtype != np.float32:
+            ds[vn] = ds[vn].astype(np.float32)

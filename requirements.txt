@@ -4,3 +4,4 @@ joblib
 numpy
 pandas >=2,<3
 requests
+xarray
