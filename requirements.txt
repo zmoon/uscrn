@@ -1,5 +1,6 @@
 fastparquet
 ipython
+joblib
 numpy
-pandas
+pandas >=2,<3
 requests
