@@ -56,12 +56,180 @@ def get_daily_col_info() -> pd.DataFrame:
     assert len(nums) == len(columns)
     assert nums == [str(i + 1) for i in range(len(columns))]
 
-    # TODO: descriptions
+    # For consistency with meta, use 'wban' instead of 'wbanno'
+    assert columns[0] == "WBANNO"
+    columns[0] = "WBAN"
 
-    return (columns,)
+    # Lowercase better
+    columns = [c.lower() for c in columns]
+
+    # Based on
+    # - https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
+    # - https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/readme.txt
+
+    attrs = {
+        # vn: (long_name, units, description).
+        "wban": ("WBAN number", "", "The station WBAN number."),
+        "lst_date": (
+            "LST date",
+            "",
+            "The Local Standard Time (LST) date of the observation",
+        ),
+        "crx_vn": (
+            "station datalogger version number",
+            "",
+            (
+                "The version number of the station datalogger program that was in effect at the time of the observation. "
+                "Note: This field should be treated as text (i.e. string)."
+            ),
+        ),
+        "longitude": (
+            "station longitude",
+            "degree_east",
+            "Station longitude, using WGS-84.",
+        ),
+        "latitude": (
+            "station latitude",
+            "degree_north",
+            "Station latitude, using WGS-84.",
+        ),
+        "t_daily_max": (
+            "daily maximum air temperature",
+            "degree_Celsius",
+            "Maximum air temperature, in degrees C. See Note F.",
+        ),
+        "t_daily_min": (
+            "daily minimum air temperatuer",
+            "degree_Celsius",
+            "Minimum air temperature, in degrees C. See Note F.",
+        ),
+        "t_daily_mean": (
+            "(t_daily_max + t_daily_min) / 2",
+            "degree_Celsius",
+            "Mean air temperature, in degrees C, calculated using the typical historical approach: (T_DAILY_MAX + T_DAILY_MIN) / 2. See Note F.",
+        ),
+        "t_daily_avg": (
+            "daily average air temperature",
+            "degree_Celsius",
+            "Average air temperature, in degrees C. See Note F.",
+        ),
+        "p_daily_calc": (
+            "daily total precip",
+            "mm",
+            "Total amount of precipitation, in mm. See Note F.",
+        ),
+        "solarad_daily": (
+            "daily total solar radiation",
+            "MJ m-2",
+            "Total solar energy, in MJ/meter^2, calculated from the hourly average global solar radiation rates and converted to energy by integrating over time.",
+        ),
+        "sur_temp_daily_type": (
+            "type of infrared surface temperature measurement",
+            "",
+            "Type of infrared surface temperature measurement. 'R' denotes raw measurements, 'C' denotes corrected measurements, and 'U' indicates unknown/missing. See Note G.",
+        ),
+        "sur_temp_daily_max": (
+            "daily maximum infrared surface temperature",
+            "degree_Celsius",
+            "Maximum infrared surface temperature, in degrees C.",
+        ),
+        "sur_temp_daily_min": (
+            "daily minimum infrared surface temperature",
+            "degree_Celsius",
+            "Minimum infrared surface temperature, in degrees C.",
+        ),
+        "sur_temp_daily_avg": (
+            "daily average infrared surface temperature",
+            "degree_Celsius",
+            "Average infrared surface temperature, in degrees C.",
+        ),
+        "rh_daily_max": (
+            "daily maximum relative humidity",
+            "%",
+            "Maximum relative humidity, in %. See Notes H and I.",
+        ),
+        "rh_daily_min": (
+            "daily minimum relative humidity",
+            "%",
+            "Minimum relative humidity, in %. See Notes H and I.",
+        ),
+        "rh_daily_avg": (
+            "daily average relative humidity",
+            "%",
+            "Average relative humidity, in %. See Notes H and I.",
+        ),
+        "soil_moisture_5_daily": (
+            "daily average soil moisture at 5 cm depth",
+            "1",
+            "Average soil moisture, in fractional volumetric water content (m3 m-3), at 5 cm below the surface. See Notes I and J.",
+        ),
+        "soil_moisture_10_daily": (
+            "daily average soil moisture at 10 cm depth",
+            "1",
+            "Average soil moisture, in fractional volumetric water content (m3 m-3), at 10 cm below the surface. See Notes I and J.",
+        ),
+        "soil_moisture_20_daily": (
+            "daily average soil moisture at 20 cm depth",
+            "1",
+            "Average soil moisture, in fractional volumetric water content (m3 m-3), at 20 cm below the surface. See Notes I and J.",
+        ),
+        "soil_moisture_50_daily": (
+            "daily average soil moisture at 50 cm depth",
+            "1",
+            "Average soil moisture, in fractional volumetric water content (m3 m-3), at 50 cm below the surface. See Notes I and J.",
+        ),
+        "soil_moisture_100_daily": (
+            "daily average soil moisture at 100 cm depth",
+            "1",
+            "Average soil moisture, in fractional volumetric water content (m3 m-3), at 100 cm below the surface. See Notes I and J.",
+        ),
+        "soil_temp_5_daily": (
+            "daily average soil temperature at 5 cm depth",
+            "degree_Celsius",
+            "Average soil temperature, in degrees C, at 5 cm below the surface. See Notes I and J.",
+        ),
+        "soil_temp_10_daily": (
+            "daily average soil temperature at 10 cm depth",
+            "degree_Celsius",
+            "Average soil temperature, in degrees C, at 10 cm below the surface. See Notes I and J.",
+        ),
+        "soil_temp_20_daily": (
+            "daily average soil temperature at 20 cm depth",
+            "degree_Celsius",
+            "Average soil temperature, in degrees C, at 20 cm below the surface. See Notes I and J.",
+        ),
+        "soil_temp_50_daily": (
+            "daily average soil temperature at 50 cm depth",
+            "degree_Celsius",
+            "Average soil temperature, in degrees C, at 50 cm below the surface. See Notes I and J.",
+        ),
+        "soil_temp_100_daily": (
+            "daily average soil temperature at 100 cm depth",
+            "degree_Celsius",
+            "Average  soil temperature, in degrees C, at 100 cm below the surface. See Notes I and J.",
+        ),
+    }
+
+    # TODO: construct above a bit more programatically (using template strings)?
+
+    assert set(attrs) == set(columns)
+
+    # For xarray dataset with depth dim
+    attrs["soil_moisture_daily"] = (
+        "daily average soil moisture",
+        "1",
+        "Average soil moisture, in fractional volumetric water content (m3 m-3). See Notes I and J.",
+    )
+    attrs["soil_temp_daily"] = (
+        "daily average soil temperature",
+        "degree_Celsius",
+        "Average soil temperature, in degrees C. See Notes I and J.",
+    )
+
+    return (columns, attrs)
 
 
-DAILY_COLS, = get_daily_col_info()
+(DAILY_COLS, DAILY_ATTRS) = get_daily_col_info()
 
 
 def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
@@ -79,11 +247,10 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
         header=None,
         names=columns,
         dtype={0: str, 2: str},
-        parse_dates=["LST_DATE"],
+        parse_dates=["lst_date"],
+        date_format=r"%Y%m%d",
         na_values=[-99999, -9999],
     )
-    df.columns = df.columns.str.lower()
-    df = df.rename(columns={"wbanno": "wban"})  # consistency with meta file
 
     # Set soil moisture -99 to NaN
     sm_cols = df.columns[df.columns.str.startswith("soil_moisture_")]
@@ -135,9 +302,12 @@ def get_crn(
 
     # Discover files
     print("Discovering files...")
+
     def get_year_urls(year):
         if year not in available_years:
-            raise ValueError(f"year {year} not in detected available CRN years {available_years}")
+            raise ValueError(
+                f"year {year} not in detected available CRN years {available_years}"
+            )
 
         # Get filenames from the year page
         # e.g. `>CRND0103-2020-TX_Palestine_6_WNW.txt<`
@@ -146,12 +316,11 @@ def get_crn(
         r.raise_for_status()
         fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
         if not fns:
-            warnings.warn(f"no CRN files found for year {year} (url {url})", stacklevel=2)
+            warnings.warn(
+                f"no CRN files found for year {year} (url {url})", stacklevel=2
+            )
 
-        return (
-            f"{base_url}/{year}/{fn}"
-            for fn in fns
-        )
+        return (f"{base_url}/{year}/{fn}" for fn in fns)
 
     pool = ThreadPool(processes=min(len(years), 10))
     urls = list(chain.from_iterable(pool.imap(get_year_urls, years)))
@@ -180,7 +349,9 @@ def get_crn(
     if dropna:
         df = df.dropna(subset=data_cols, how="all").reset_index(drop=True)
         if df.empty:
-            warnings.warn("CRN dataframe empty after dropping missing data rows", stacklevel=2)
+            warnings.warn(
+                "CRN dataframe empty after dropping missing data rows", stacklevel=2
+            )
 
     # Category cols?
     if cat:
@@ -205,8 +376,7 @@ if __name__ == "__main__":
     # xarray
     df = dfr
     ds = (
-        df
-        .set_index(["wban", "lst_date"])
+        df.set_index(["wban", "lst_date"])
         .to_xarray()
         .swap_dims(wban="site")
         .set_coords(["latitude", "longitude"])
@@ -221,7 +391,11 @@ if __name__ == "__main__":
         vn_new = "_".join(vn_new_parts)
 
         if "depth" not in ds:
-            ds["depth"] = ("depth", depths, {"long_name": "depth below surface", "units": "cm"})
+            ds["depth"] = (
+                "depth",
+                depths,
+                {"long_name": "depth below surface", "units": "cm"},
+            )
 
         vns_ = [f"{pref}{d:.0f}_daily" for d in depths]  # ensure sorted correctly
         assert set(vns) == set(vns_)
@@ -234,3 +408,13 @@ if __name__ == "__main__":
     for vn in ds.data_vars:  # leave coords
         if pd.api.types.is_float_dtype(ds[vn].dtype) and ds[vn].dtype != np.float32:
             ds[vn] = ds[vn].astype(np.float32)
+
+    # attrs
+    for vn in ds.variables:
+        attrs = DAILY_ATTRS.get(vn if vn != "time" else "lst_date")
+        if attrs is None:
+            if vn not in {"time", "depth"}:
+                warnings.warn(f"no attrs for {vn}")
+            continue
+        (long_name, units, description) = attrs
+        ds[vn].attrs.update(long_name=long_name, units=units, description=description)
