@@ -4,6 +4,7 @@ import datetime
 import re
 import warnings
 from functools import lru_cache
+from multiprocessing.pool import ThreadPool
 from typing import Iterable
 
 import numpy as np
@@ -112,6 +113,8 @@ def get_crn(
 
     Data: https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/
     """
+    from itertools import chain
+
     from joblib import Parallel, delayed
 
     base_url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01"
@@ -130,9 +133,7 @@ def get_crn(
 
     # Discover files
     print("Discovering files...")
-    # TODO: multithread
-    urls = []
-    for year in years:
+    def get_year_urls(year):
         if year not in available_years:
             raise ValueError(f"year {year} not in detected available CRN years {available_years}")
 
@@ -145,10 +146,14 @@ def get_crn(
         if not fns:
             warnings.warn(f"no CRN files found for year {year} (url {url})", stacklevel=2)
 
-        urls.extend(
+        return (
             f"{base_url}/{year}/{fn}"
             for fn in fns
         )
+
+    pool = ThreadPool(processes=min(len(years), 10))
+    urls = list(chain.from_iterable(pool.imap(get_year_urls, years)))
+    pool.close()
 
     print(f"{len(urls)} files found")
     print(urls[0])
