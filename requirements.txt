@@ -1,4 +1,5 @@
 fastparquet
+ipython
 numpy
 pandas
 requests

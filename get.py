@@ -1,9 +1,37 @@
+import datetime
 import re
 import warnings
 
 import numpy as np
 import pandas as pd
 import requests
+
+
+def load_meta(*, cat=False):
+    """Load the station metadata table.
+
+    https://www.ncei.noaa.gov/pub/data/uscrn/products/stations.tsv
+    """
+    url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/stations.tsv"
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    df = pd.read_csv(
+        url,
+        sep="\t",
+        header=0,
+        dtype={0: str, 13: str, 15: str},
+        parse_dates=[10, 11],
+        na_values=["NA", "UN"],
+    )
+    df.columns = df.columns.str.lower()
+
+    if cat:
+        for col in ["status", "operation", "network"]:
+            df[col] = df[col].astype("category")
+
+    df.attrs.update(created=now)
+
+    return df
 
 
 def get_crn(days, *, use_cache=True):
@@ -101,3 +129,7 @@ def get_crn(days, *, use_cache=True):
     df = df[df.LST_DATE.isin(days.floor("D"))].reset_index(drop=True)
 
     return df
+
+
+if __name__ == "__main__":
+    meta = load_meta(cat=True)
