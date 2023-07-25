@@ -1,10 +1,9 @@
 import re
+import warnings
 
 import numpy as np
 import pandas as pd
 import requests
-
-import warnings
 
 
 def get_crn(days, *, use_cache=True):
