@@ -385,6 +385,8 @@ if __name__ == "__main__":
     # xarray
     #
 
+    now = datetime.datetime.now(datetime.timezone.utc)
+
     df = dfr
     ds = (
         df.set_index(["wban", "lst_date"])
@@ -420,7 +422,7 @@ if __name__ == "__main__":
         if pd.api.types.is_float_dtype(ds[vn].dtype) and ds[vn].dtype != np.float32:
             ds[vn] = ds[vn].astype(np.float32)
 
-    # attrs
+    # var attrs
     for vn in ds.variables:
         attrs = DAILY_ATTRS.get(vn)
         if attrs is None:
@@ -438,6 +440,11 @@ if __name__ == "__main__":
     assert (ds["longitude"] == lon0).all()
     ds["latitude"] = lat0
     ds["longitude"] = lon0
+
+    # ds attrs
+    ds.attrs["title"] = "U.S. Climate Reference Network (USCRN) | daily | 2020"
+    ds.attrs["created"] = str(now)
+    ds.attrs["source"] = "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/"
 
     # save
     encoding = {
