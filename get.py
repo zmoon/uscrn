@@ -3,9 +3,9 @@ from __future__ import annotations
 import datetime
 import re
 import warnings
+from collections.abc import Iterable
 from functools import lru_cache
 from multiprocessing.pool import ThreadPool
-from typing import Iterable
 
 import numpy as np
 import pandas as pd
@@ -268,9 +268,7 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     # Category cols?
     if cat:
         for col in ["sur_temp_daily_type"]:
-            df[col] = df[col].astype(
-                pd.CategoricalDtype(categories=["R", "C", "U"], ordered=False)
-            )
+            df[col] = df[col].astype(pd.CategoricalDtype(categories=["R", "C", "U"], ordered=False))
 
     return df
 
@@ -315,9 +313,7 @@ def get_crn(
 
     def get_year_urls(year):
         if year not in available_years:
-            raise ValueError(
-                f"year {year} not in detected available CRN years {available_years}"
-            )
+            raise ValueError(f"year {year} not in detected available CRN years {available_years}")
 
         # Get filenames from the year page
         # e.g. `>CRND0103-2020-TX_Palestine_6_WNW.txt<`
@@ -326,9 +322,7 @@ def get_crn(
         r.raise_for_status()
         fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
         if not fns:
-            warnings.warn(
-                f"no CRN files found for year {year} (url {url})", stacklevel=2
-            )
+            warnings.warn(f"no CRN files found for year {year} (url {url})", stacklevel=2)
 
         return (f"{base_url}/{year}/{fn}" for fn in fns)
 
@@ -359,9 +353,7 @@ def get_crn(
     if dropna:
         df = df.dropna(subset=data_cols, how="all").reset_index(drop=True)
         if df.empty:
-            warnings.warn(
-                "CRN dataframe empty after dropping missing data rows", stacklevel=2
-            )
+            warnings.warn("CRN dataframe empty after dropping missing data rows", stacklevel=2)
 
     # Category cols?
     if cat:
