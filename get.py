@@ -284,6 +284,8 @@ def get_crn(
 ) -> pd.DataFrame:
     """Get daily CRN data.
 
+    Home page: https://www.ncei.noaa.gov/access/crn/
+
     Info: https://www.ncei.noaa.gov/access/crn/qcdatasets.html
 
     Data: https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/
