@@ -1,0 +1,94 @@
+# Based on
+# - https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
+# - https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/readme.txt
+daily:
+  columns:
+    - name: wban
+      long_name: WBAN number
+      units: null
+      description: The station WBAN number.
+
+    - name: lst_date
+      long_name: LST date
+      units: null
+      description: The Local Standard Time (LST) date of the observation.
+
+    - name: crx_vn
+      long_name: station datalogger version number
+      units: null
+      description: >-
+        The version number of the station datalogger program that was in effect
+        at the time of the observation.
+        Note: This field should be treated as text (i.e. string).
+
+    - name: longitude
+      long_name: station longitude
+      units: degree_east
+      description: Station longitude, using WGS-84.
+    - name: latitude
+      long_name: station latitude
+      units: degree_north
+      description: Station latitude, using WGS-84.
+
+    - name: t_daily_max
+      long_name: daily maximum air temperature
+      units: degree_Celsius
+      description: Maximum air temperature, in degrees C. See Note F.
+    - name: t_daily_min
+      long_name: daily minimum air temperature
+      units: degree_Celsius
+      description: Minimum air temperature, in degrees C. See Note F.
+    - name: t_daily_mean
+      long_name: (t_daily_max + t_daily_min) / 2
+      units: degree_Celsius
+      description: >-
+        Mean air temperature, in degrees C, calculated using the typical historical approach:
+        (T_DAILY_MAX + T_DAILY_MIN) / 2.
+        See Note F.
+    - name: t_daily_avg
+      long_name: daily average air temperature
+      units: degree_Celsius
+      description: Average air temperature, in degrees C. See Note F.
+
+    - name: p_daily_calc
+      long_name: daily total precipitation
+      units: mm
+      description: Total amount of precipitation, in mm. See Note F.
+
+    - name: solarad_daily
+      long_name: daily total solar radiation
+      units: MJ m-2
+      description: >-
+        Total solar energy, in MJ m-2,
+        calculated from the hourly average global solar radiation rates
+        and converted to energy by integrating over time.
+
+    - name: sur_temp_daily_type
+      long_name: type of infrared surface temperature measurement
+      units: null
+      description: >-
+        Type of infrared surface temperature measurement.
+        'R' denotes raw measurements,
+        'C' denotes corrected measurements,
+        and 'U' indicates unknown/missing.
+        See Note G.
+    - name: sur_temp_daily_max
+      long_name: daily maximum infrared surface temperature
+      units: degree_Celsius
+      description: Maximum infrared surface temperature, in degrees C.
+    - name: sur_temp_daily_min
+      long_name: daily minimum infrared surface temperature
+      units: degree_Celsius
+      description: Minimum infrared surface temperature, in degrees C.
+    - name: sur_temp_daily_avg
+      long_name: daily average infrared surface temperature
+      units: degree_Celsius
+      description: Average infrared surface temperature, in degrees C.
+
+    - name: rh_daily_max
+      long_name: daily maximum relative humidity
+      units: "%"
+      description: Maximum relative humidity, in %. See Notes H and I.
+
+  notes:
+    A: ""
