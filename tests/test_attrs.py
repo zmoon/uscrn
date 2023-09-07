@@ -41,3 +41,4 @@ def test_expand_strs():
 def test_load_attrs():
     attrs = load_attrs()
     assert len(attrs["daily"]["columns"]) == 28 + 2, "2 extra for the xarray depth dim ones"
+    assert len(attrs["hourly"]["columns"]) == 38 + 2, "2 extra for the xarray depth dim ones"

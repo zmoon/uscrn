@@ -1,3 +1,162 @@
+hourly:
+  # - https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/readme.txt
+  columns:
+    - name: wban
+      long_name: WBAN number
+      units: null
+      description: The station WBAN number.
+
+    - name: utc_date
+      long_name: UTC date
+      units: null
+      description: The UTC date of the observation.
+
+    - name: utc_time
+      long_name: UTC time
+      units: null
+      description: >-
+        The UTC time of the observation. Time is the end of the observed
+        hour, so the 0000 hour is actually the last hour of the previous
+        day's observation (starting just after 11:00 PM through midnight).
+
+    - name: lst_date
+      long_name: LST date
+      units: null
+      description: The Local Standard Time (LST) date of the observation.
+
+    - name: lst_time
+      long_name: LST time
+      units: null
+      description: >-
+        The Local Standard Time (LST) time of the observation. Time is the
+        end of the observed hour (see UTC_TIME description).
+
+    - name: crx_vn
+      long_name: station datalogger version number
+      units: null
+      description: >-
+        The version number of the station datalogger program that was in effect
+        at the time of the observation.
+        Note: This field should be treated as text (i.e. string).
+
+    - name: "{longitude,latitude}"
+      long_name: station {longitude,latitude}
+      units: "{degree_east,degree_north}"
+      description: Station {longitude,latitude}, using WGS-84.
+
+    - name: t_calc
+      long_name: average air temperature during last 5 min
+      units: degree_Celsius
+      description: >-
+        Average air temperature,
+        in degrees C,
+        during the last 5 minutes of the hour.
+        See Note F.
+    - name: t_hr_avg
+      long_name: hourly average air temperature
+      units: degree_Celsius
+      description: >-
+        Average air temperature,
+        in degrees C,
+        for the entire hour.
+        See Note F.
+    - name: t_{max,min}
+      long_name: hourly {maximum,minimum} air temperature
+      units: Degree_Celsius
+      description: >-
+        {Maximum,Minimum} air temperature,
+        in degrees C,
+        during the hour.
+        See Note F.
+
+    - name: p_calc
+      long_name: hourly total precipitation
+      units: mm
+      description: >-
+        Total amount of precipitation,
+        in mm,
+        recorded during the hour.
+        See Note F.
+
+    - name: solarad
+      long_name: hourly average solar radiation
+      units: W m-2
+      description: Average global solar radiation, in W m-2.
+    - name: solarad_flag
+      long_name: QC flag for hourly average solar radiation
+      units: null
+      description: QC flag for average global solar radiation. See Note G.
+    - name: solarad_{max,min}
+      long_name: hourly {maximum,minimum} solar radiation
+      units: W m-2
+      description: "{Maximum,Minimum} global solar radiation, in W m-2."
+    - name: solarad_{max,min}_flag
+      long_name: QC flag for hourly {maximum,minimum} solar radiation
+      units: null
+      description: QC flag for {maximum,minimum} global solar radiation. See Note G.
+
+    - name: sur_temp_type
+      long_name: type of infrared surface temperature measurement
+      units: null
+      description: >-
+        Type of infrared surface temperature measurement: 'R' denotes raw
+        (uncorrected), 'C' denotes corrected, and 'U' when unknown/missing.
+        See Note H.
+    - name: sur_{temp,temp_max,temp_min}
+      long_name: hourly {average,maximum,minimum} infrared surface temperature
+      units: degree_Celsius
+      description: "{Average,Maximum,Minimum} infrared surface temperature, in degrees C. See Note H."
+    - name: sur_{temp_flag,temp_max_flag,temp_min_flag}
+      long_name: QC flag for hourly {average,maximum,minimum} infrared surface temperature
+      units: degree_Celsius
+      description: >-
+        QC flag for {average,maximum,minimum} infrared surface temperature,
+        in degrees C.
+        See Note G.
+
+    - name: rh_hr_avg
+      long_name: hourly average relative humidity
+      units: "%"
+      description: RH average for hour, in percentage. See Note I.
+    - name: rh_hr_avg_flag
+      long_name: QC flag for hourly average relative humidity
+      units: null
+      description: QC flag for hourly average relative humidity. See Note G.
+
+    - name: soil_moisture_{5,10,20,50,100}
+      long_name: hourly average soil moisture at {5,10,20,50,100} cm depth
+      units: m3 m-3
+      description: >-
+        Average soil moisture,
+        in fractional volumetric water content (m3 m-3),
+        at {5,10,20,50,100} cm below the surface.
+        See Note K.
+
+    - name: soil_temp_{5,10,20,50,100}
+      long_name: hourly average soil temperature at {5,10,20,50,100} cm depth
+      units: degree_Celsius
+      description: >-
+        Average soil temperature,
+        in degrees C,
+        at {5,10,20,50,100} cm below the surface.
+        See Note K.
+
+    # For xarray dataset with depth dim
+    - name: soil_moisture
+      long_name: hourly average soil moisture
+      units: m3 m-3
+      description: >-
+        Average soil moisture,
+        in fractional volumetric water content (m3 m-3).
+        See Note K.
+    - name: soil_temp
+      long_name: hourly average soil temperature
+      units: degree_Celsius
+      description: >-
+        Average soil temperature,
+        in degrees C.
+        See Note K.
+
 daily:
   # - https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
   # - https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/readme.txt
