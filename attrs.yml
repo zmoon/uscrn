@@ -85,10 +85,19 @@ daily:
       units: degree_Celsius
       description: Average infrared surface temperature, in degrees C.
 
+    # IDEA: Bash-like expansion syntax, e.g. `rh_daily_{max,min,avg}`
     - name: rh_daily_max
       long_name: daily maximum relative humidity
       units: "%"
       description: Maximum relative humidity, in %. See Notes H and I.
+    - name: rh_daily_min
+      long_name: daily minimum relative humidity
+      units: "%"
+      description: Minimum relative humidity, in %. See Notes H and I.
+    - name: rh_daily_avg
+      long_name: daily average relative humidity
+      units: "%"
+      description: Average relative humidity, in %. See Notes H and I.
 
   notes:
     A: ""
