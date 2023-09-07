@@ -22,7 +22,10 @@ def expand_str(s: str) -> list[str]:
     repls: dict[str, list[str]] = {}
     to_repl = re.findall(r"\{.*?\}", s)
     for braced in to_repl:
-        opts = [s.strip() for s in braced[1:-1].split(",")]
+        # TODO: could be improved, issues if quotes within the quoted string
+        opts = [
+            s.strip() for s in re.split(r",(?=(?:[^'\"]*['\"][^'\"]*['\"])*[^'\"]*$)", braced[1:-1])
+        ]
         for i, opt in enumerate(opts):
             # Maybe remove quotes
             try:
@@ -98,3 +101,9 @@ print(s, "=>", expand_str(s))
 
 d = {"greeting": "Hi there, I'm a {🐱,🐶}. {Meow,Woof}!", "type": "{cat,dog}"}
 print(d, "=>", expand_strs(d), sep="\n")
+
+s = "Hi there, \"{asdf, 'name, with, commas, in, it'}\"!"
+assert expand_str(s) == ['Hi there, "asdf"!', 'Hi there, "name, with, commas, in, it"!']
+
+s = 'Hi there, "{asdf, "name, with, commas, in, it"}"!'
+assert expand_str(s) == ['Hi there, "asdf"!', 'Hi there, "name, with, commas, in, it"!']
