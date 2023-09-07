@@ -56,7 +56,7 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
         dtype=_DAILY.dtypes,
         parse_dates=["lst_date"],
         date_format=r"%Y%m%d",
-        na_values=[-99999, -9999],
+        na_values=["-99999", "-9999"],
     )
 
     # Set soil moisture -99 to NaN
@@ -103,11 +103,13 @@ def get_crn(
     r.raise_for_status()
     available_years: list[int] = [int(s) for s in re.findall(r">([0-9]{4})/?<", r.text)]
 
+    years_: list[int]
     if isinstance(years, int):
-        years = [years]
-
-    if years is None:
-        years = available_years[:]
+        years_ = [years]
+    elif years is None:
+        years_ = available_years[:]
+    else:
+        years = list(years)
 
     # Discover files
     print("Discovering files...")
@@ -127,8 +129,8 @@ def get_crn(
 
         return (f"{base_url}/{year}/{fn}" for fn in fns)
 
-    pool = ThreadPool(processes=min(len(years), 10))
-    urls = list(chain.from_iterable(pool.imap(get_year_urls, years)))
+    pool = ThreadPool(processes=min(len(years_), 10))
+    urls = list(chain.from_iterable(pool.imap(get_year_urls, years_)))
     pool.close()
 
     print(f"{len(urls)} files found")
@@ -205,6 +207,7 @@ def to_xarray(df: pd.DataFrame) -> xr.Dataset:
 
     # var attrs
     for vn in ds.variables:
+        assert isinstance(vn, str)
         attrs = _DAILY.attrs.get(vn)
         if attrs is None:
             if vn not in {"time", "depth"}:

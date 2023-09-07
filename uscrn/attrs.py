@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, NamedTuple
@@ -53,10 +54,10 @@ def expand_str(s: str) -> list[str]:
     return s_news
 
 
-def expand_strs(d: dict[str, str | None]) -> list[dict[str, str | None]]:
+def expand_strs(d: Mapping[str, str | None]) -> list[dict[str, str | None]]:
     """Apply :func:`expand_str` to all values in dict, generating new dicts."""
 
-    opts = {}
+    opts: dict[str, list[str] | list[None]] = {}
     for k, v in d.items():
         if v is not None:
             opts[k] = expand_str(v)
@@ -68,11 +69,11 @@ def expand_strs(d: dict[str, str | None]) -> list[dict[str, str | None]]:
     d_news = []
     for i in range(n):
         d_new = {}
-        for k, v in opts.items():
-            if len(v) == 1:
-                d_new[k] = v[0]
+        for k, vals in opts.items():
+            if len(vals) == 1:
+                d_new[k] = vals[0]
             else:
-                d_new[k] = v[i]
+                d_new[k] = vals[i]
         d_news.append(d_new)
 
     return d_news
@@ -103,7 +104,7 @@ def load_attrs():
 
 class _DsetVarInfo(NamedTuple):
     names: list[str]
-    dtypes: list[Any]
+    dtypes: dict[str, Any]  # TODO: better typing
     attrs: dict[str, dict[str, str | None]]
 
 
@@ -142,7 +143,7 @@ def get_daily_col_info() -> _DsetVarInfo:
     assert normal_attrs.keys() == set(columns)
 
     # Floats in the text files are represented with 7 chars only, little precision
-    dtypes = {c: np.float32 for c in columns}
+    dtypes: dict[str, Any] = {c: np.float32 for c in columns}
     dtypes["wban"] = str
     del dtypes["lst_date"]
     dtypes["crx_vn"] = str
