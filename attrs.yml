@@ -21,14 +21,18 @@ daily:
         at the time of the observation.
         Note: This field should be treated as text (i.e. string).
 
-    - name: longitude
-      long_name: station longitude
+    - name: "{longitude,latitude}"
+      long_name: station {longitude,latitude}
       units: degree_east
-      description: Station longitude, using WGS-84.
-    - name: latitude
-      long_name: station latitude
-      units: degree_north
-      description: Station latitude, using WGS-84.
+      description: Station {longitude,latitude}, using WGS-84.
+    # - name: longitude
+    #   long_name: station longitude
+    #   units: degree_east
+    #   description: Station longitude, using WGS-84.
+    # - name: latitude
+    #   long_name: station latitude
+    #   units: degree_north
+    #   description: Station latitude, using WGS-84.
 
     - name: t_daily_max
       long_name: daily maximum air temperature
