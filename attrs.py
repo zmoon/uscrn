@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import yaml
+from functools import lru_cache
 
 
 def expand_str(s: str) -> list[str]:
@@ -72,49 +72,56 @@ def expand_strs(d: dict[str, str | None]) -> list[dict[str, str | None]]:
     return d_news
 
 
-s = "hi no opts"
-assert expand_str(s) == ["hi no opts"]
+@lru_cache(1)
+def load_attrs():
+    import itertools
 
-s = "hi {only-one-opt}"
-assert expand_str(s) == ["hi only-one-opt"]
+    import yaml
 
-s = "{one,two}"
-assert expand_str(s) == ["one", "two"]
+    with open("attrs.yml") as f:
+        attrs = yaml.full_load(f)
 
-s = "{one,'two'}"
-assert expand_str(s) == ["one", "two"]
+    # Expand column entries
+    for which in ["hourly", "daily", "monthly"]:
+        if which not in attrs:
+            continue
+        attrs[which]["columns"] = list(
+            itertools.chain.from_iterable(expand_strs(d) for d in attrs[which]["columns"])
+        )
 
-s = "{one, 'two'}"
-assert expand_str(s) == ["one", "two"]
+    return attrs
 
-s = "{one, ' two'}"
-assert expand_str(s) == ["one", " two"]
 
-s = "Hi there, I'm a {cat,dog}. {Meow,Woof}!"
-print(s, "=>", expand_str(s))
+if __name__ == "__main__":
+    s = "hi no opts"
+    assert expand_str(s) == ["hi no opts"]
 
-d = {"greeting": "Hi there, I'm a {🐱,🐶}. {Meow,Woof}!", "type": "{cat,dog}"}
-print(d, "=>", expand_strs(d), sep="\n")
+    s = "hi {only-one-opt}"
+    assert expand_str(s) == ["hi only-one-opt"]
 
-s = "Hi there, \"{asdf, 'name, with, commas, in, it'}\"!"
-assert expand_str(s) == ['Hi there, "asdf"!', 'Hi there, "name, with, commas, in, it"!']
+    s = "{one,two}"
+    assert expand_str(s) == ["one", "two"]
 
-s = 'Hi there, "{asdf, "name, with, commas, in, it"}"!'
-assert expand_str(s) == ['Hi there, "asdf"!', 'Hi there, "name, with, commas, in, it"!']
+    s = "{one,'two'}"
+    assert expand_str(s) == ["one", "two"]
 
-with open("attrs.yml") as f:
-    attrs = yaml.full_load(f)
+    s = "{one, 'two'}"
+    assert expand_str(s) == ["one", "two"]
 
-for d in attrs["daily"]["columns"]:
-    if "{" in d["name"]:
-        print()
-        print(d)
-        print("=>", expand_strs(d))
+    s = "{one, ' two'}"
+    assert expand_str(s) == ["one", " two"]
 
-import itertools
+    s = "Hi there, I'm a {cat,dog}. {Meow,Woof}!"
+    print(s, "=>", expand_str(s))
 
-attrs_expanded = list(
-    itertools.chain.from_iterable(expand_strs(d) for d in attrs["daily"]["columns"])
-)
+    d = {"greeting": "Hi there, I'm a {🐱,🐶}. {Meow,Woof}!", "type": "{cat,dog}"}
+    print(d, "=>", expand_strs(d), sep="\n")
 
-assert len(attrs_expanded) == 28
+    s = "Hi there, \"{asdf, 'name, with, commas, in, it'}\"!"
+    assert expand_str(s) == ['Hi there, "asdf"!', 'Hi there, "name, with, commas, in, it"!']
+
+    s = 'Hi there, "{asdf, "name, with, commas, in, it"}"!'
+    assert expand_str(s) == ['Hi there, "asdf"!', 'Hi there, "name, with, commas, in, it"!']
+
+    attrs = load_attrs()
+    assert len(attrs["daily"]["columns"]) == 28
