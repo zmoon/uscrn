@@ -70,6 +70,24 @@ daily:
       units: "%"
       description: "{Maximum,Minimum,Average} relative humidity, in %. See Notes H and I."
 
+    - name: soil_moisture_{5,10,20,50,100}_daily
+      long_name: daily average soil moisture at {5,10,20,50,100} cm depth
+      units: m3 m-3
+      description: >-
+        Average soil moisture,
+        in fractional volumetric water content (m3 m-3),
+        at {5,10,20,50,100} cm below the surface.
+        See Notes I and J.
+
+    - name: soil_temp_{5,10,20,50,100}_daily
+      long_name: daily average soil temperature at {5,10,20,50,100} cm depth
+      units: degree_Celsius
+      description: >-
+        Average soil temperature,
+        in degrees C,
+        at {5,10,20,50,100} cm below the surface.
+        See Notes I and J.
+
   notes:
     A: All fields are separated from adjacent fields by at least one space.
     B: Leading zeros are omitted.

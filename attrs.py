@@ -20,12 +20,13 @@ def expand_str(s: str) -> list[str]:
         ]
         for i, opt in enumerate(opts):
             # Maybe remove quotes
-            try:
-                opt_ = literal_eval(opt)
-            except (ValueError, SyntaxError):
-                continue
-            else:
-                opts[i] = opt_
+            if opt.startswith(("'", '"')):
+                try:
+                    opt_ = literal_eval(opt)
+                except (ValueError, SyntaxError):
+                    continue
+                else:
+                    opts[i] = opt_
         repls[braced] = opts
 
     if not repls:
@@ -48,12 +49,13 @@ def expand_str(s: str) -> list[str]:
     return s_news
 
 
-def expand_strs(d: dict[str, str]) -> list[dict[str, str]]:
+def expand_strs(d: dict[str, str | None]) -> list[dict[str, str]]:
     """Apply :func:`expand_str` to all values in dict, generating new dicts."""
 
     opts = {}
     for k, v in d.items():
-        opts[k] = expand_str(v)
+        if v is not None:
+            opts[k] = expand_str(v)
 
     # NOTE: Number of opts for each key will be 1 or n (which may itself be 1)
     n = max(len(v) for v in opts.values())
@@ -108,3 +110,11 @@ for d in attrs["daily"]["columns"]:
         print()
         print(d)
         print("=>", expand_strs(d))
+
+import itertools
+
+attrs_expanded = list(
+    itertools.chain.from_iterable(expand_strs(d) for d in attrs["daily"]["columns"])
+)
+
+assert len(attrs_expanded) == 28
