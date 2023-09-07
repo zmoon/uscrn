@@ -4,5 +4,6 @@ joblib
 netCDF4
 numpy
 pandas >=2,<3
+PyYAML
 requests
 xarray
