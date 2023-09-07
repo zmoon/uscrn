@@ -56,6 +56,8 @@ def expand_strs(d: dict[str, str | None]) -> list[dict[str, str | None]]:
     for k, v in d.items():
         if v is not None:
             opts[k] = expand_str(v)
+        else:
+            opts[k] = [v]
 
     # NOTE: Number of opts for each key will be 1 or n (which may itself be 1)
     n = max(len(v) for v in opts.values())
@@ -85,9 +87,12 @@ def load_attrs():
     for which in ["hourly", "daily", "monthly"]:
         if which not in attrs:
             continue
-        attrs[which]["columns"] = list(
+        var_attrs = list(
             itertools.chain.from_iterable(expand_strs(d) for d in attrs[which]["columns"])
         )
+        names = [a["name"] for a in var_attrs]
+        assert len(names) == len(set(names)), "Names should be unique"
+        attrs[which]["columns"] = {a["name"]: a for a in var_attrs}
 
     return attrs
 
@@ -124,4 +129,4 @@ if __name__ == "__main__":
     assert expand_str(s) == ['Hi there, "asdf"!', 'Hi there, "name, with, commas, in, it"!']
 
     attrs = load_attrs()
-    assert len(attrs["daily"]["columns"]) == 28
+    assert len(attrs["daily"]["columns"]) == 28 + 2

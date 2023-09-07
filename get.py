@@ -45,6 +45,8 @@ def get_daily_col_info() -> pd.DataFrame:
 
     https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
     """
+    from attrs import load_attrs
+
     # "This file contains the following three lines: Field Number, Field Name and Unit of Measure."
     url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt"
     r = requests.get(url)
@@ -63,168 +65,13 @@ def get_daily_col_info() -> pd.DataFrame:
     # Lowercase better
     columns = [c.lower() for c in columns]
 
-    # Based on
-    # - https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
-    # - https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/readme.txt
-
-    attrs = {
-        # vn: (long_name, units, description).
-        "wban": ("WBAN number", "", "The station WBAN number."),
-        "lst_date": (
-            "LST date",
-            "",
-            "The Local Standard Time (LST) date of the observation.",
-        ),
-        "crx_vn": (
-            "station datalogger version number",
-            "",
-            (
-                "The version number of the station datalogger program that was in effect at the time of the observation. "
-                "Note: This field should be treated as text (i.e. string)."
-            ),
-        ),
-        "longitude": (
-            "station longitude",
-            "degree_east",
-            "Station longitude, using WGS-84.",
-        ),
-        "latitude": (
-            "station latitude",
-            "degree_north",
-            "Station latitude, using WGS-84.",
-        ),
-        "t_daily_max": (
-            "daily maximum air temperature",
-            "degree_Celsius",
-            "Maximum air temperature, in degrees C. See Note F.",
-        ),
-        "t_daily_min": (
-            "daily minimum air temperatuer",
-            "degree_Celsius",
-            "Minimum air temperature, in degrees C. See Note F.",
-        ),
-        "t_daily_mean": (
-            "(t_daily_max + t_daily_min) / 2",
-            "degree_Celsius",
-            "Mean air temperature, in degrees C, calculated using the typical historical approach: (T_DAILY_MAX + T_DAILY_MIN) / 2. See Note F.",
-        ),
-        "t_daily_avg": (
-            "daily average air temperature",
-            "degree_Celsius",
-            "Average air temperature, in degrees C. See Note F.",
-        ),
-        "p_daily_calc": (
-            "daily total precip",
-            "mm",
-            "Total amount of precipitation, in mm. See Note F.",
-        ),
-        "solarad_daily": (
-            "daily total solar radiation",
-            "MJ m-2",
-            "Total solar energy, in MJ/meter^2, calculated from the hourly average global solar radiation rates and converted to energy by integrating over time.",
-        ),
-        "sur_temp_daily_type": (
-            "type of infrared surface temperature measurement",
-            "",
-            "Type of infrared surface temperature measurement. 'R' denotes raw measurements, 'C' denotes corrected measurements, and 'U' indicates unknown/missing. See Note G.",
-        ),
-        "sur_temp_daily_max": (
-            "daily maximum infrared surface temperature",
-            "degree_Celsius",
-            "Maximum infrared surface temperature, in degrees C.",
-        ),
-        "sur_temp_daily_min": (
-            "daily minimum infrared surface temperature",
-            "degree_Celsius",
-            "Minimum infrared surface temperature, in degrees C.",
-        ),
-        "sur_temp_daily_avg": (
-            "daily average infrared surface temperature",
-            "degree_Celsius",
-            "Average infrared surface temperature, in degrees C.",
-        ),
-        "rh_daily_max": (
-            "daily maximum relative humidity",
-            "%",
-            "Maximum relative humidity, in %. See Notes H and I.",
-        ),
-        "rh_daily_min": (
-            "daily minimum relative humidity",
-            "%",
-            "Minimum relative humidity, in %. See Notes H and I.",
-        ),
-        "rh_daily_avg": (
-            "daily average relative humidity",
-            "%",
-            "Average relative humidity, in %. See Notes H and I.",
-        ),
-        "soil_moisture_5_daily": (
-            "daily average soil moisture at 5 cm depth",
-            "1",
-            "Average soil moisture, in fractional volumetric water content (m3 m-3), at 5 cm below the surface. See Notes I and J.",
-        ),
-        "soil_moisture_10_daily": (
-            "daily average soil moisture at 10 cm depth",
-            "1",
-            "Average soil moisture, in fractional volumetric water content (m3 m-3), at 10 cm below the surface. See Notes I and J.",
-        ),
-        "soil_moisture_20_daily": (
-            "daily average soil moisture at 20 cm depth",
-            "1",
-            "Average soil moisture, in fractional volumetric water content (m3 m-3), at 20 cm below the surface. See Notes I and J.",
-        ),
-        "soil_moisture_50_daily": (
-            "daily average soil moisture at 50 cm depth",
-            "1",
-            "Average soil moisture, in fractional volumetric water content (m3 m-3), at 50 cm below the surface. See Notes I and J.",
-        ),
-        "soil_moisture_100_daily": (
-            "daily average soil moisture at 100 cm depth",
-            "1",
-            "Average soil moisture, in fractional volumetric water content (m3 m-3), at 100 cm below the surface. See Notes I and J.",
-        ),
-        "soil_temp_5_daily": (
-            "daily average soil temperature at 5 cm depth",
-            "degree_Celsius",
-            "Average soil temperature, in degrees C, at 5 cm below the surface. See Notes I and J.",
-        ),
-        "soil_temp_10_daily": (
-            "daily average soil temperature at 10 cm depth",
-            "degree_Celsius",
-            "Average soil temperature, in degrees C, at 10 cm below the surface. See Notes I and J.",
-        ),
-        "soil_temp_20_daily": (
-            "daily average soil temperature at 20 cm depth",
-            "degree_Celsius",
-            "Average soil temperature, in degrees C, at 20 cm below the surface. See Notes I and J.",
-        ),
-        "soil_temp_50_daily": (
-            "daily average soil temperature at 50 cm depth",
-            "degree_Celsius",
-            "Average soil temperature, in degrees C, at 50 cm below the surface. See Notes I and J.",
-        ),
-        "soil_temp_100_daily": (
-            "daily average soil temperature at 100 cm depth",
-            "degree_Celsius",
-            "Average  soil temperature, in degrees C, at 100 cm below the surface. See Notes I and J.",
-        ),
+    # Check consistency with attrs YAML file
+    assert len(columns) == len(set(columns)), "Column names should be unique"
+    attrs = load_attrs()["daily"]["columns"]
+    normal_attrs = {
+        k: v for k, v in attrs.items() if k not in {"soil_moisture_daily", "soil_temp_daily"}
     }
-
-    # TODO: construct above a bit more programatically (using template strings)?
-
-    assert set(attrs) == set(columns)
-
-    # For xarray dataset with depth dim
-    attrs["soil_moisture_daily"] = (
-        "daily average soil moisture",
-        "1",
-        "Average soil moisture, in fractional volumetric water content (m3 m-3). See Notes I and J.",
-    )
-    attrs["soil_temp_daily"] = (
-        "daily average soil temperature",
-        "degree_Celsius",
-        "Average soil temperature, in degrees C. See Notes I and J.",
-    )
+    assert normal_attrs.keys() == set(columns)
 
     # Floats in the text files are represented with 7 chars only, little precision
     dtypes = {c: np.float32 for c in columns}
@@ -409,9 +256,11 @@ def to_xarray(df: pd.DataFrame) -> xr.Dataset:
             if vn not in {"time", "depth"}:
                 warnings.warn(f"no attrs for {vn}")
             continue
-        (long_name, units, description) = attrs
-        ds[vn].attrs.update(long_name=long_name, units=units, description=description)
-    ds["time"].attrs.update(description=DAILY_ATTRS["lst_date"][2])
+        attrs_ = {
+            k: attrs[k] for k in ["long_name", "units", "description"] if attrs[k] is not None
+        }
+        ds[vn].attrs.update(attrs_)
+    ds["time"].attrs.update(description=DAILY_ATTRS["lst_date"]["description"])
 
     # lat/lon don't vary in time
     lat0 = ds["latitude"].isel(time=0)

@@ -1,7 +1,6 @@
-# Based on
-# - https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
-# - https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/readme.txt
 daily:
+  # - https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
+  # - https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/readme.txt
   columns:
     - name: wban
       long_name: WBAN number
@@ -86,6 +85,22 @@ daily:
         Average soil temperature,
         in degrees C,
         at {5,10,20,50,100} cm below the surface.
+        See Notes I and J.
+
+    # For xarray dataset with depth dim
+    - name: soil_moisture_daily
+      long_name: daily average soil moisture
+      units: m3 m-3
+      description: >-
+        Average soil moisture,
+        in fractional volumetric water content (m3 m-3).
+        See Notes I and J.
+    - name: soil_temp_daily
+      long_name: daily average soil temperature
+      units: degree_Celsius
+      description: >-
+        Average soil temperature,
+        in degrees C.
         See Notes I and J.
 
   notes:
