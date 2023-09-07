@@ -49,7 +49,7 @@ def expand_str(s: str) -> list[str]:
     return s_news
 
 
-def expand_strs(d: dict[str, str | None]) -> list[dict[str, str]]:
+def expand_strs(d: dict[str, str | None]) -> list[dict[str, str | None]]:
     """Apply :func:`expand_str` to all values in dict, generating new dicts."""
 
     opts = {}
