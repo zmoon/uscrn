@@ -11,6 +11,10 @@ import numpy as np
 import pandas as pd
 import requests
 
+from attrs import get_daily_col_info
+
+_DAILY = get_daily_col_info()
+
 
 def load_meta(*, cat: bool = False) -> pd.DataFrame:
     """Load the station metadata table.
@@ -85,9 +89,6 @@ def get_daily_col_info() -> pd.DataFrame:
     return (columns, dtypes, attrs)
 
 
-(DAILY_COLS, DAILY_DTYPES, DAILY_ATTRS) = get_daily_col_info()
-
-
 def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     """Read a daily CRN file.
 
@@ -98,8 +99,8 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
         fp,
         delim_whitespace=True,
         header=None,
-        names=DAILY_COLS,
-        dtype=DAILY_DTYPES,
+        names=_DAILY.names,
+        dtype=_DAILY.dtypes,
         parse_dates=["lst_date"],
         date_format=r"%Y%m%d",
         na_values=[-99999, -9999],
@@ -251,7 +252,7 @@ def to_xarray(df: pd.DataFrame) -> xr.Dataset:
 
     # var attrs
     for vn in ds.variables:
-        attrs = DAILY_ATTRS.get(vn)
+        attrs = _DAILY.attrs.get(vn)
         if attrs is None:
             if vn not in {"time", "depth"}:
                 warnings.warn(f"no attrs for {vn}")
@@ -260,7 +261,7 @@ def to_xarray(df: pd.DataFrame) -> xr.Dataset:
             k: attrs[k] for k in ["long_name", "units", "description"] if attrs[k] is not None
         }
         ds[vn].attrs.update(attrs_)
-    ds["time"].attrs.update(description=DAILY_ATTRS["lst_date"]["description"])
+    ds["time"].attrs.update(description=_DAILY.attrs["lst_date"]["description"])
 
     # lat/lon don't vary in time
     lat0 = ds["latitude"].isel(time=0)

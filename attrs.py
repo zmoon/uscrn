@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Any, NamedTuple
 
 
 def expand_str(s: str) -> list[str]:
@@ -95,6 +96,58 @@ def load_attrs():
         attrs[which]["columns"] = {a["name"]: a for a in var_attrs}
 
     return attrs
+
+
+class _DsetVarInfo(NamedTuple):
+    names: list[str]
+    dtypes: list[Any]
+    attrs: dict[str, dict[str, str | None]]
+
+
+def get_daily_col_info() -> _DsetVarInfo:
+    """Read the column info file (the individual files don't have headers).
+
+    https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
+    """
+    import numpy as np
+    import requests
+
+    # "This file contains the following three lines: Field Number, Field Name and Unit of Measure."
+    url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt"
+    r = requests.get(url)
+    r.raise_for_status()
+    lines = r.text.splitlines()
+    assert len(lines) == 3
+    nums = lines[0].split()
+    columns = lines[1].split()
+    assert len(nums) == len(columns)
+    assert nums == [str(i + 1) for i in range(len(columns))]
+
+    # For consistency with meta, use 'wban' instead of 'wbanno'
+    assert columns[0] == "WBANNO"
+    columns[0] = "WBAN"
+
+    # Lowercase better
+    columns = [c.lower() for c in columns]
+
+    # Check consistency with attrs YAML file
+    assert len(columns) == len(set(columns)), "Column names should be unique"
+    attrs = load_attrs()["daily"]["columns"]
+    normal_attrs = {
+        k: v for k, v in attrs.items() if k not in {"soil_moisture_daily", "soil_temp_daily"}
+    }
+    assert normal_attrs.keys() == set(columns)
+
+    # Floats in the text files are represented with 7 chars only, little precision
+    dtypes = {c: np.float32 for c in columns}
+    dtypes["wban"] = str
+    del dtypes["lst_date"]
+    dtypes["crx_vn"] = str
+    dtypes["longitude"] = np.float64  # coords
+    dtypes["latitude"] = np.float64
+    dtypes["sur_temp_daily_type"] = str
+
+    return _DsetVarInfo(names=columns, dtypes=dtypes, attrs=attrs)
 
 
 if __name__ == "__main__":
