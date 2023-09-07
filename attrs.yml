@@ -25,23 +25,11 @@ daily:
       long_name: station {longitude,latitude}
       units: "{degree_east,degree_north}"
       description: Station {longitude,latitude}, using WGS-84.
-    # - name: longitude
-    #   long_name: station longitude
-    #   units: degree_east
-    #   description: Station longitude, using WGS-84.
-    # - name: latitude
-    #   long_name: station latitude
-    #   units: degree_north
-    #   description: Station latitude, using WGS-84.
 
-    - name: t_daily_max
-      long_name: daily maximum air temperature
+    - name: t_daily_{max,min,avg}
+      long_name: daily {maximum,minimum,average} air temperature
       units: degree_Celsius
-      description: Maximum air temperature, in degrees C. See Note F.
-    - name: t_daily_min
-      long_name: daily minimum air temperature
-      units: degree_Celsius
-      description: Minimum air temperature, in degrees C. See Note F.
+      description: "{Maximum,Minimum,Average} air temperature, in degrees C. See Note F."
     - name: t_daily_mean
       long_name: (t_daily_max + t_daily_min) / 2
       units: degree_Celsius
@@ -49,10 +37,6 @@ daily:
         Mean air temperature, in degrees C, calculated using the typical historical approach:
         (T_DAILY_MAX + T_DAILY_MIN) / 2.
         See Note F.
-    - name: t_daily_avg
-      long_name: daily average air temperature
-      units: degree_Celsius
-      description: Average air temperature, in degrees C. See Note F.
 
     - name: p_daily_calc
       long_name: daily total precipitation
@@ -76,32 +60,15 @@ daily:
         'C' denotes corrected measurements,
         and 'U' indicates unknown/missing.
         See Note G.
-    - name: sur_temp_daily_max
-      long_name: daily maximum infrared surface temperature
+    - name: sur_temp_daily_{max,min,avg}
+      long_name: daily {maximum,minimum,average} infrared surface temperature
       units: degree_Celsius
-      description: Maximum infrared surface temperature, in degrees C.
-    - name: sur_temp_daily_min
-      long_name: daily minimum infrared surface temperature
-      units: degree_Celsius
-      description: Minimum infrared surface temperature, in degrees C.
-    - name: sur_temp_daily_avg
-      long_name: daily average infrared surface temperature
-      units: degree_Celsius
-      description: Average infrared surface temperature, in degrees C.
+      description: "{Maximum,Minimum,Average} infrared surface temperature, in degrees C."
 
-    # IDEA: Bash-like expansion syntax, e.g. `rh_daily_{max,min,avg}`
-    - name: rh_daily_max
-      long_name: daily maximum relative humidity
+    - name: rh_daily_{max,min,avg}
+      long_name: daily {maximum,minimum,average} relative humidity
       units: "%"
-      description: Maximum relative humidity, in %. See Notes H and I.
-    - name: rh_daily_min
-      long_name: daily minimum relative humidity
-      units: "%"
-      description: Minimum relative humidity, in %. See Notes H and I.
-    - name: rh_daily_avg
-      long_name: daily average relative humidity
-      units: "%"
-      description: Average relative humidity, in %. See Notes H and I.
+      description: "{Maximum,Minimum,Average} relative humidity, in %. See Notes H and I."
 
   notes:
     A: All fields are separated from adjacent fields by at least one space.

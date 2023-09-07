@@ -2,14 +2,6 @@ from __future__ import annotations
 
 import yaml
 
-with open("attrs.yml") as f:
-    attrs = yaml.full_load(f)
-
-for d in attrs["daily"]["columns"]:
-    if "{" in d["name"]:
-        print(d)
-        break
-
 
 def expand_str(s: str) -> list[str]:
     """For example:
@@ -107,3 +99,12 @@ assert expand_str(s) == ['Hi there, "asdf"!', 'Hi there, "name, with, commas, in
 
 s = 'Hi there, "{asdf, "name, with, commas, in, it"}"!'
 assert expand_str(s) == ['Hi there, "asdf"!', 'Hi there, "name, with, commas, in, it"!']
+
+with open("attrs.yml") as f:
+    attrs = yaml.full_load(f)
+
+for d in attrs["daily"]["columns"]:
+    if "{" in d["name"]:
+        print()
+        print(d)
+        print("=>", expand_strs(d))
