@@ -4,14 +4,13 @@ import datetime
 import re
 import warnings
 from collections.abc import Iterable
-from functools import lru_cache
 from multiprocessing.pool import ThreadPool
 
 import numpy as np
 import pandas as pd
 import requests
 
-from attrs import get_daily_col_info
+from .attrs import get_daily_col_info
 
 _DAILY = get_daily_col_info()
 
@@ -41,52 +40,6 @@ def load_meta(*, cat: bool = False) -> pd.DataFrame:
     df.attrs.update(created=now)
 
     return df
-
-
-@lru_cache(1)
-def get_daily_col_info() -> pd.DataFrame:
-    """Read the column info file (the individual files don't have headers).
-
-    https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
-    """
-    from attrs import load_attrs
-
-    # "This file contains the following three lines: Field Number, Field Name and Unit of Measure."
-    url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt"
-    r = requests.get(url)
-    r.raise_for_status()
-    lines = r.text.splitlines()
-    assert len(lines) == 3
-    nums = lines[0].split()
-    columns = lines[1].split()
-    assert len(nums) == len(columns)
-    assert nums == [str(i + 1) for i in range(len(columns))]
-
-    # For consistency with meta, use 'wban' instead of 'wbanno'
-    assert columns[0] == "WBANNO"
-    columns[0] = "WBAN"
-
-    # Lowercase better
-    columns = [c.lower() for c in columns]
-
-    # Check consistency with attrs YAML file
-    assert len(columns) == len(set(columns)), "Column names should be unique"
-    attrs = load_attrs()["daily"]["columns"]
-    normal_attrs = {
-        k: v for k, v in attrs.items() if k not in {"soil_moisture_daily", "soil_temp_daily"}
-    }
-    assert normal_attrs.keys() == set(columns)
-
-    # Floats in the text files are represented with 7 chars only, little precision
-    dtypes = {c: np.float32 for c in columns}
-    dtypes["wban"] = str
-    del dtypes["lst_date"]
-    dtypes["crx_vn"] = str
-    dtypes["longitude"] = np.float64  # coords
-    dtypes["latitude"] = np.float64
-    dtypes["sur_temp_daily_type"] = str
-
-    return (columns, dtypes, attrs)
 
 
 def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:

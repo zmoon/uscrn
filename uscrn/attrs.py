@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Any, NamedTuple
+
+HERE = Path(__file__).parent
 
 
 def expand_str(s: str) -> list[str]:
@@ -81,7 +84,7 @@ def load_attrs():
 
     import yaml
 
-    with open("attrs.yml") as f:
+    with open(HERE / "attrs.yml") as f:
         attrs = yaml.full_load(f)
 
     # Expand column entries
