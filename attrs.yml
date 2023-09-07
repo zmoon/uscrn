@@ -23,7 +23,7 @@ daily:
 
     - name: "{longitude,latitude}"
       long_name: station {longitude,latitude}
-      units: degree_east
+      units: "{degree_east,degree_north}"
       description: Station {longitude,latitude}, using WGS-84.
     # - name: longitude
     #   long_name: station longitude

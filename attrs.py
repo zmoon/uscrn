@@ -12,6 +12,10 @@ for d in attrs["daily"]["columns"]:
 
 
 def expand_str(s: str) -> list[str]:
+    """For example:
+    "hi there, I'm a {cat,dog}. {woof,meow}!"
+    => ["hi there, I'm a cat. woof!", "hi there, I'm a dog. meow!"]
+    """
     import re
     from ast import literal_eval
 
@@ -23,7 +27,7 @@ def expand_str(s: str) -> list[str]:
             # Maybe remove quotes
             try:
                 opt_ = literal_eval(opt)
-            except ValueError:
+            except (ValueError, SyntaxError):
                 continue
             else:
                 opts[i] = opt_
@@ -49,6 +53,28 @@ def expand_str(s: str) -> list[str]:
     return s_news
 
 
+def expand_strs(d: dict[str, str]) -> list[dict[str, str]]:
+    """Apply :func:`expand_str` to all values in dict, generating new dicts."""
+
+    opts = {}
+    for k, v in d.items():
+        opts[k] = expand_str(v)
+
+    # NOTE: Number of opts for each key will be 1 or n (which may itself be 1)
+    n = max(len(v) for v in opts.values())
+    d_news = []
+    for i in range(n):
+        d_new = {}
+        for k, v in opts.items():
+            if len(v) == 1:
+                d_new[k] = v[0]
+            else:
+                d_new[k] = v[i]
+        d_news.append(d_new)
+
+    return d_news
+
+
 s = "hi no opts"
 assert expand_str(s) == ["hi no opts"]
 
@@ -67,5 +93,8 @@ assert expand_str(s) == ["one", "two"]
 s = "{one, ' two'}"
 assert expand_str(s) == ["one", " two"]
 
-s = "hi there, I'm a {cat,dog}. {woof,meow}!"
+s = "Hi there, I'm a {cat,dog}. {Meow,Woof}!"
 print(s, "=>", expand_str(s))
+
+d = {"greeting": "Hi there, I'm a {🐱,🐶}. {Meow,Woof}!", "type": "{cat,dog}"}
+print(d, "=>", expand_strs(d), sep="\n")
