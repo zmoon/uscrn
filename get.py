@@ -365,23 +365,9 @@ def get_crn(
     return df
 
 
-if __name__ == "__main__":
-    import xarray as xr
+def to_xarray(df: pd.DataFrame) -> xr.Dataset:
+    """Convert to an xarray dataset."""
 
-    # meta = load_meta(cat=True)
-    # df = get_crn(2020, cat=True)
-
-    fn = "crn_2020.parquet.gz"
-    # df.to_parquet(fn, engine="fastparquet", compression="gzip")
-    dfr = pd.read_parquet(fn, engine="fastparquet")
-
-    #
-    # xarray
-    #
-
-    now = datetime.datetime.now(datetime.timezone.utc)
-
-    df = dfr
     ds = (
         df.set_index(["wban", "lst_date"])
         .to_xarray()
@@ -436,9 +422,29 @@ if __name__ == "__main__":
     ds["longitude"] = lon0
 
     # ds attrs
+    now = datetime.datetime.now(datetime.timezone.utc)
     ds.attrs["title"] = "U.S. Climate Reference Network (USCRN) | daily | 2020"
     ds.attrs["created"] = str(now)
     ds.attrs["source"] = "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/"
+
+    return ds
+
+
+if __name__ == "__main__":
+    import xarray as xr
+
+    # meta = load_meta(cat=True)
+    # df = get_crn(2020, cat=True)
+
+    fn = "crn_2020.parquet.gz"
+    # df.to_parquet(fn, engine="fastparquet", compression="gzip")
+    dfr = pd.read_parquet(fn, engine="fastparquet")
+
+    #
+    # xarray
+    #
+
+    ds = to_xarray(dfr)
 
     # save
     encoding = {
