@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from uscrn import to_xarray
+from uscrn import load_meta, read_daily, read_hourly, to_xarray
 
 HERE = Path(__file__).parent
 DATA = HERE / "data"
@@ -29,3 +29,23 @@ def test_example_xr():
     #     if pd.api.types.is_float_dtype(ds[vn].dtype)
     # }
     # ds.to_netcdf("crn_2020.nc", encoding=encoding)
+
+
+def test_load_meta():
+    meta = load_meta()
+    assert len(meta) > 0
+    assert meta[["country", "state"]].isnull().sum().sum() == 0
+
+
+def test_get_hourly():
+    df = read_hourly(
+        "https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/2019/CRNH0203-2019-CO_Boulder_14_W.txt"
+    )
+    assert len(df) > 0
+
+
+def test_get_daily():
+    df = read_daily(
+        "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/2019/CRND0103-2019-CO_Boulder_14_W.txt"
+    )
+    assert len(df) > 0

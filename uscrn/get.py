@@ -11,9 +11,10 @@ import pandas as pd
 import requests
 import xarray as xr
 
-from .attrs import get_daily_col_info
+from .attrs import get_col_info
 
-_DAILY = get_daily_col_info()
+_DAILY = get_col_info("daily")
+_HOURLY = get_col_info("hourly")
 
 
 def load_meta(*, cat: bool = False) -> pd.DataFrame:
@@ -47,7 +48,7 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     """Read a daily CRN file.
 
     For example:
-    https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/2010/CRND0103-2010-CO_Boulder_14_W.txt
+    https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/2019/CRND0103-2019-CO_Boulder_14_W.txt
     """
     df = pd.read_csv(
         fp,
@@ -71,6 +72,42 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     if cat:
         for col in ["sur_temp_daily_type"]:
             df[col] = df[col].astype(pd.CategoricalDtype(categories=["R", "C", "U"], ordered=False))
+
+    return df
+
+
+def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
+    """Read an hourly CRN file.
+
+    For example:
+    https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/2019/CRNH0203-2019-CO_Boulder_14_W.txt
+    """
+    df = pd.read_csv(
+        fp,
+        delim_whitespace=True,
+        header=None,
+        names=_HOURLY.names,
+        dtype=_HOURLY.dtypes,
+        parse_dates={"utc_time_": ["utc_date", "utc_time"], "lst_time_": ["lst_date", "lst_time"]},
+        date_format=r"%Y%m%d %H%M",
+        na_values=["-99999", "-9999"],
+    )
+    df = df.rename(columns={"utc_time_": "utc_time", "lst_time_": "lst_time"})
+
+    # Set soil moisture -99 to NaN
+    sm_cols = df.columns[df.columns.str.startswith("soil_moisture_")]
+    df[sm_cols] = df[sm_cols].replace(-99, np.nan)
+
+    # Unknown datalogger version
+    df["crx_vn"] = df["crx_vn"].replace("-9.000", np.nan)
+
+    # Category cols?
+    if cat:
+        for col in ["sur_temp_type"]:
+            df[col] = df[col].astype(pd.CategoricalDtype(categories=["R", "C", "U"], ordered=False))
+        for col in df.columns:
+            if col.endswith("_flag"):
+                df[col] = df[col].astype(pd.CategoricalDtype(categories=["0", "3"], ordered=False))
 
     return df
 
