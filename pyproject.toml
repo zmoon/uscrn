@@ -16,6 +16,7 @@ dependencies = [
     "pandas >=2,<3",
     "PyYAML",
     "requests",
+    "xarray",
 ]
 
 [project.urls]
@@ -29,11 +30,13 @@ test = [
     "netCDF4",
     "pandas-stubs",
     "pytest",
-    "xarray",
 ]
 dev = [
     "ipython",
 ]
+
+[tool.flit.sdist]
+exclude = [".github/", ".gitignore", "tests/"]
 
 [tool.black]
 line-length = 100

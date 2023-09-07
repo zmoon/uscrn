@@ -152,38 +152,3 @@ def get_daily_col_info() -> _DsetVarInfo:
     dtypes["sur_temp_daily_type"] = str
 
     return _DsetVarInfo(names=columns, dtypes=dtypes, attrs=attrs)
-
-
-if __name__ == "__main__":
-    s = "hi no opts"
-    assert expand_str(s) == ["hi no opts"]
-
-    s = "hi {only-one-opt}"
-    assert expand_str(s) == ["hi only-one-opt"]
-
-    s = "{one,two}"
-    assert expand_str(s) == ["one", "two"]
-
-    s = "{one,'two'}"
-    assert expand_str(s) == ["one", "two"]
-
-    s = "{one, 'two'}"
-    assert expand_str(s) == ["one", "two"]
-
-    s = "{one, ' two'}"
-    assert expand_str(s) == ["one", " two"]
-
-    s = "Hi there, I'm a {cat,dog}. {Meow,Woof}!"
-    print(s, "=>", expand_str(s))
-
-    d = {"greeting": "Hi there, I'm a {🐱,🐶}. {Meow,Woof}!", "type": "{cat,dog}"}
-    print(d, "=>", expand_strs(d), sep="\n")
-
-    s = "Hi there, \"{asdf, 'name, with, commas, in, it'}\"!"
-    assert expand_str(s) == ['Hi there, "asdf"!', 'Hi there, "name, with, commas, in, it"!']
-
-    s = 'Hi there, "{asdf, "name, with, commas, in, it"}"!'
-    assert expand_str(s) == ['Hi there, "asdf"!', 'Hi there, "name, with, commas, in, it"!']
-
-    attrs = load_attrs()
-    assert len(attrs["daily"]["columns"]) == 28 + 2

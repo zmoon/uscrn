@@ -9,6 +9,7 @@ from multiprocessing.pool import ThreadPool
 import numpy as np
 import pandas as pd
 import requests
+import xarray as xr
 
 from .attrs import get_daily_col_info
 
@@ -234,28 +235,3 @@ def to_xarray(df: pd.DataFrame) -> xr.Dataset:
     ds.attrs["source"] = "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/"
 
     return ds
-
-
-if __name__ == "__main__":
-    import xarray as xr
-
-    # meta = load_meta(cat=True)
-    # df = get_crn(2020, cat=True)
-
-    fn = "crn_2020.parquet.gz"
-    # df.to_parquet(fn, engine="fastparquet", compression="gzip")
-    dfr = pd.read_parquet(fn, engine="fastparquet")
-
-    #
-    # xarray
-    #
-
-    ds = to_xarray(dfr)
-
-    # save
-    encoding = {
-        vn: {"zlib": True, "complevel": 1}
-        for vn in ds.data_vars
-        if pd.api.types.is_float_dtype(ds[vn].dtype)
-    }
-    ds.to_netcdf("crn_2020.nc", encoding=encoding)
