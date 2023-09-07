@@ -1,6 +1,6 @@
 import pytest
 
-from uscrn.attrs import expand_str, expand_strs, load_attrs
+from uscrn.attrs import expand_str, expand_strs, get_col_info, load_attrs
 
 
 @pytest.mark.parametrize(
@@ -42,3 +42,8 @@ def test_load_attrs():
     attrs = load_attrs()
     assert len(attrs["daily"]["columns"]) == 28 + 2, "2 extra for the xarray depth dim ones"
     assert len(attrs["hourly"]["columns"]) == 38 + 2, "2 extra for the xarray depth dim ones"
+
+
+def test_load_col_info():
+    get_col_info("daily")
+    get_col_info("hourly")
