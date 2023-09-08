@@ -247,7 +247,7 @@ def get_data(
     elif years is None:
         years_ = available_years[:]
     else:
-        years = list(years)
+        years_ = list(years)
 
     # Discover files
     print("Discovering files...")
