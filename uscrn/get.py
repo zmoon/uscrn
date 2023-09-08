@@ -82,11 +82,8 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
 
     # Category cols?
     if cat:
-        for col in ["sur_temp_type"]:
-            df[col] = df[col].astype(pd.CategoricalDtype(categories=["R", "C", "U"], ordered=False))
-        for col in df.columns:
-            if col.endswith("_flag"):
-                df[col] = df[col].astype(pd.CategoricalDtype(categories=["0", "3"], ordered=False))
+        for col, cats in _HOURLY.categorical.items():
+            df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
     df.attrs.update(which="hourly")
 
@@ -124,8 +121,8 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
 
     # Category cols?
     if cat:
-        for col in ["sur_temp_daily_type"]:
-            df[col] = df[col].astype(pd.CategoricalDtype(categories=["R", "C", "U"], ordered=False))
+        for col, cats in _DAILY.categorical.items():
+            df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
     df.attrs.update(which="daily")
 
@@ -243,8 +240,10 @@ def get_crn(
 
     # Category cols?
     if cat:
-        for col in ["sur_temp_daily_type"]:
-            df[col] = df[col].astype("category")
+        for col in df.columns:
+            cats = attrs[which]["columns"][col]["categories"]
+            if cats is not False:
+                df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
     now = datetime.datetime.now(datetime.timezone.utc)
     df.attrs.update(which=which, created=now, source=base_url)

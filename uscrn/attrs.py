@@ -121,7 +121,7 @@ def load_attrs() -> dict[str, dict[str, Any]]:
         )
         names = [a["name"] for a in var_attrs]
         assert len(names) == len(set(names)), "Names should be unique"
-        attrs[which]["columns"] = {a["name"]: a for a in var_attrs}
+        attrs[which]["columns"] = {a["name"]: a for a in var_attrs}  # list -> dict
 
     # dtype defaults to float32
     # NOTE: Floats in the text files are represented with 7 chars only, little precision
@@ -136,7 +136,11 @@ def load_attrs() -> dict[str, dict[str, Any]]:
             if "xarray_only" not in v:
                 v["xarray_only"] = False
 
-    # TODO: categories defaults to false
+    # categories defaults to false
+    for which in WHICHS:
+        for _, v in attrs[which]["columns"].items():
+            if "categories" not in v:
+                v["categories"] = False
 
     return attrs
 
@@ -153,6 +157,9 @@ class _DsetVarInfo(NamedTuple):
 
     notes: dict[str, str]
     """Labeled notes associated with the dataset, mentioned in the readme."""
+
+    categorical: dict[str, list[Any]]
+    """Maps applicable column names to list of categories."""
 
 
 _DTYPE_MAP = {
@@ -172,7 +179,7 @@ def _map_dtype(dtype: str) -> type | None:
 
 def get_col_info(which: Literal["hourly", "daily"] = "daily") -> _DsetVarInfo:
     """Read the column info file (the individual data files don't have headers)
-    and stored attribute data.
+    and stored attribute data, preparing info for use in ``read_csv``.
 
     For example:
     https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
@@ -215,4 +222,9 @@ def get_col_info(which: Literal["hourly", "daily"] = "daily") -> _DsetVarInfo:
         if dtype is not None:
             dtypes[k] = dtype
 
-    return _DsetVarInfo(names=columns, dtypes=dtypes, attrs=attrs, notes=notes)
+    # Categorical dtype categories
+    categorical = {k: v["categories"] for k, v in attrs.items() if v["categories"] is not False}
+
+    return _DsetVarInfo(
+        names=columns, dtypes=dtypes, attrs=attrs, notes=notes, categorical=categorical
+    )

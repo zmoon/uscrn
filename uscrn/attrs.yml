@@ -95,6 +95,7 @@ hourly:
       units: null
       description: QC flag for average global solar radiation. See Note G.
       dtype: string
+      categories: ["0", "3"]
     - name: solarad_{max,min}
       long_name: hourly {maximum,minimum} solar radiation
       units: W m-2
@@ -104,6 +105,7 @@ hourly:
       units: null
       description: QC flag for {maximum,minimum} global solar radiation. See Note G.
       dtype: string
+      categories: ["0", "3"]
 
     - name: sur_temp_type
       long_name: type of infrared surface temperature measurement
@@ -113,6 +115,7 @@ hourly:
         (uncorrected), 'C' denotes corrected, and 'U' when unknown/missing.
         See Note H.
       dtype: string
+      categories: [R, C, U]
     - name: sur_{temp,temp_max,temp_min}
       long_name: hourly {average,maximum,minimum} infrared surface temperature
       units: degree_Celsius
@@ -125,6 +128,7 @@ hourly:
         in degrees C.
         See Note G.
       dtype: string
+      categories: ["0", "3"]
 
     - name: rh_hr_avg
       long_name: hourly average relative humidity
@@ -135,6 +139,7 @@ hourly:
       units: null
       description: QC flag for hourly average relative humidity. See Note G.
       dtype: string
+      categories: ["0", "3"]
 
     - name: soil_moisture_{5,10,20,50,100}
       long_name: hourly average soil moisture at {5,10,20,50,100} cm depth
@@ -303,6 +308,7 @@ daily:
         and 'U' indicates unknown/missing.
         See Note G.
       dtype: string
+      categories: [R, C, U]
     - name: sur_temp_daily_{max,min,avg}
       long_name: daily {maximum,minimum,average} infrared surface temperature
       units: degree_Celsius
