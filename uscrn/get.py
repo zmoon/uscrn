@@ -17,6 +17,8 @@ from .attrs import get_col_info
 _HOURLY = get_col_info("hourly")
 _DAILY = get_col_info("daily")
 
+_GET_CAP: int | None = None
+
 
 def load_meta(*, cat: bool = False) -> pd.DataFrame:
     """Load the station metadata table.
@@ -259,6 +261,11 @@ def get_crn(
     print("...")
     print(urls[-1])
 
+    if _GET_CAP is not None:
+        urls = urls[:_GET_CAP]
+        # TODO: random selection?
+        print(f"Using the first {_GET_CAP} files only")
+
     print("Reading files...")
     read = _which_to_reader[which]
     dfs = Parallel(n_jobs=n_jobs, verbose=10)(delayed(read)(url) for url in urls)
@@ -363,18 +370,38 @@ def to_xarray(df: pd.DataFrame, which: Literal["hourly", "daily"] | None = None)
         ds[vn].attrs.update(attrs_)
     ds["time"].attrs.update(description=var_attrs[time_var]["description"])
 
-    # lat/lon don't vary in time
-    lat0 = ds["latitude"].isel(time=0)
-    lon0 = ds["longitude"].isel(time=0)
-    assert (ds["latitude"] == lat0).all()
-    assert (ds["longitude"] == lon0).all()
+    # lat/lon shouldn't vary in time
+    # But it seems like they are NaN if station not operating or something
+    def first(da):
+        def func(x):
+            assert x.ndim == 1
+            inds = np.where(~np.isnan(x))[0]
+            if len(inds) == 0:
+                warnings.warn(f"{da.name} all NaN for certain site")
+                return np.nan
+            else:
+                i = inds[0]
+                return x[i]
+
+        return xr.apply_ufunc(func, da, input_core_dims=[["time"]], vectorize=True)
+
+    lat0 = first(ds["latitude"])
+    lon0 = first(ds["longitude"])
     ds["latitude"] = lat0
     ds["longitude"] = lon0
 
     # ds attrs
     now = datetime.datetime.now(datetime.timezone.utc)
-    unique_years = sorted(df[time_var].dt.year.unique())
-    if len(unique_years) == 1:
+    unique_years_init = sorted(df[time_var].dt.year.unique())
+    unique_years = []
+    for y in unique_years_init:
+        t = ds.time.sel(time=str(y))
+        if t.size == 1 and t == pd.Timestamp(year=y, month=1, day=1):
+            continue
+        unique_years.append(y)
+    if len(unique_years) == 0:
+        s_years = "?"
+    elif len(unique_years) == 1:
         s_years = str(unique_years[0])
     else:
         s_years = f"{unique_years[0]}--{unique_years[-1]}"

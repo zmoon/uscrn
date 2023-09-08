@@ -1,9 +1,19 @@
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
-from uscrn.get import _which_to_reader, load_meta, parse_url, read_daily, read_hourly, to_xarray
+import uscrn
+from uscrn.get import (
+    _which_to_reader,
+    get_crn,
+    load_meta,
+    parse_url,
+    read_daily,
+    read_hourly,
+    to_xarray,
+)
 
 HERE = Path(__file__).parent
 DATA = HERE / "data"
@@ -14,6 +24,9 @@ EXAMPLE_URL = {
     "daily": "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/2019/CRND0103-2019-CO_Boulder_14_W.txt",
     "monthly": "https://www.ncei.noaa.gov/pub/data/uscrn/products/monthly01/CRNM0102-CO_Boulder_14_W.txt",
 }
+
+N = 2
+uscrn.get._GET_CAP = N
 
 
 def test_example_xr():
@@ -84,3 +97,13 @@ def test_parse_url(which, url):
     assert res.state == "CO"
     assert res.location == "Boulder"
     assert res.vector == "14 W"
+
+
+@pytest.mark.parametrize("which", uscrn.attrs.WHICHS)
+def test_get(which):
+    df = get_crn(2019, which=which, n_jobs=N)
+    assert df.wban.nunique() == N
+
+    ds = to_xarray(df)
+    assert ds.title == f"U.S. Climate Reference Network (USCRN) | {which} | 2019"
+    assert set(np.unique(ds.time.dt.year)) >= {2019}
