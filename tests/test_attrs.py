@@ -47,6 +47,10 @@ def test_load_attrs():
     whichs_guess = [k for k in attrs if not k.startswith("_")]
     assert set(whichs_guess) == set(WHICHS)
 
+    for which in WHICHS:
+        d = attrs[which]
+        assert set(d) == {"base_url", "columns", "notes"}
+
 
 def test_load_col_info():
     get_col_info("daily")
