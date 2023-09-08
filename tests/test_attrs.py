@@ -1,6 +1,16 @@
+from typing import get_args
+
 import pytest
 
-from uscrn.attrs import _ALL_WHICHS, WHICHS, expand_str, expand_strs, get_col_info, load_attrs
+from uscrn.attrs import (
+    _ALL_WHICHS,
+    VALID_WHICHS,
+    WHICHS,
+    expand_str,
+    expand_strs,
+    get_col_info,
+    load_attrs,
+)
 
 
 @pytest.mark.parametrize(
@@ -47,6 +57,7 @@ def test_load_attrs():
     assert set(WHICHS) <= set(_ALL_WHICHS)
     whichs_guess = [k for k in attrs if not k.startswith("_")]
     assert set(whichs_guess) == set(WHICHS)
+    assert get_args(VALID_WHICHS) == WHICHS
 
     for which in WHICHS:
         d = attrs[which]
