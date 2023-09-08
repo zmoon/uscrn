@@ -1,3 +1,6 @@
+"""
+Load CRN data from NCEI.
+"""
 from __future__ import annotations
 
 import datetime

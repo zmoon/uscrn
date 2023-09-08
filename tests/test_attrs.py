@@ -74,7 +74,7 @@ def test_load_col_info():
     not hasattr(inspect, "get_annotations"), reason="Requires inspect.get_annotations (Python 3.10)"
 )
 def test_check_which_args():
-    from uscrn.get import get_data, to_xarray
+    from uscrn.data import get_data, to_xarray
 
     for fn in [get_col_info, get_data]:
         which_anno = inspect.get_annotations(fn, eval_str=True)["which"]

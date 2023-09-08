@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 import uscrn
-from uscrn.get import (
+from uscrn.data import (
     _which_to_reader,
     get_data,
     load_meta,
@@ -26,7 +26,7 @@ EXAMPLE_URL = {
 }
 
 N = 2
-uscrn.get._GET_CAP = N
+uscrn.data._GET_CAP = N
 
 
 def test_example_xr():
