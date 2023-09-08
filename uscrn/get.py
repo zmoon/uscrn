@@ -337,12 +337,12 @@ def to_xarray(df: pd.DataFrame, which: Literal["hourly", "daily"] | None = None)
                 {"long_name": "depth below surface", "units": "cm"},
             )
 
-        vns_ = [f"{pref}{d:.0f}_daily" for d in depths]  # ensure sorted correctly
-        assert set(vns) == set(vns_)
+        # Ensure sorted correctly
+        vns.sort(key=lambda vn: int(vn.split("_")[2]))
 
         # New var
-        ds[vn_new] = xr.concat([ds[vn] for vn in vns_], dim="depth")
-        ds = ds.drop_vars(vns_)
+        ds[vn_new] = xr.concat([ds[vn] for vn in vns], dim="depth")
+        ds = ds.drop_vars(vns)
 
     # float32
     for vn in ds.data_vars:  # leave coords

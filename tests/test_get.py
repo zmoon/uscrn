@@ -53,11 +53,21 @@ def test_load_meta():
 def test_get_hourly():
     df = read_hourly(EXAMPLE_URL["hourly"])
     assert len(df) > 0
+    assert "soil_moisture_10" in df
+
+    ds = to_xarray(df)
+    assert {"soil_moisture", "soil_temp"} < set(ds.data_vars)
+    assert "soil_moisture_10" not in ds
 
 
 def test_get_daily():
     df = read_daily(EXAMPLE_URL["daily"])
     assert len(df) > 0
+    assert "soil_moisture_10_daily" in df
+
+    ds = to_xarray(df)
+    assert {"soil_moisture_daily", "soil_temp_daily"} < set(ds.data_vars)
+    assert "soil_moisture_10_daily" not in ds
 
 
 def test_which_to_reader():
