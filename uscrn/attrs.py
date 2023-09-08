@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any, Final, NamedTuple
 
 import numpy as np
 
@@ -81,6 +81,21 @@ def expand_strs(d: Mapping[str, str | None]) -> list[dict[str, str | None]]:
     return d_news
 
 
+WHICHS: Final = ("hourly", "daily")
+"""Identifiers for the datasets that have been implemented."""
+
+_ALL_WHICHES: Final = ("subhourly", "hourly", "daily", "monthly")
+"""All dataset identifiers, including those that may have not yet been implemented."""
+
+
+def validate_which(which: str) -> None:
+    if which not in _ALL_WHICHES:
+        raise ValueError(f"Invalid dataset identifier: {which!r}.")
+
+    if which not in WHICHS:
+        raise NotImplementedError(f"Dataset {which!r} not yet implemented.")
+
+
 @lru_cache(1)
 def load_attrs() -> dict[str, dict[str, Any]]:
     import itertools
@@ -90,10 +105,8 @@ def load_attrs() -> dict[str, dict[str, Any]]:
     with open(HERE / "attrs.yml") as f:
         attrs = yaml.full_load(f)
 
-    whichs = [k for k in attrs if not k.startswith("_")]
-
     # Expand column entries
-    for which in whichs:
+    for which in WHICHS:
         if which not in attrs:
             continue
         var_attrs = list(
@@ -105,13 +118,13 @@ def load_attrs() -> dict[str, dict[str, Any]]:
 
     # dtype defaults to float32
     # NOTE: Floats in the text files are represented with 7 chars only, little precision
-    for which in whichs:
+    for which in WHICHS:
         for _, v in attrs[which]["columns"].items():
             if "dtype" not in v:
                 v["dtype"] = "float32"
 
     # xarray-only defaults to false
-    for which in whichs:
+    for which in WHICHS:
         for _, v in attrs[which]["columns"].items():
             if "xarray_only" not in v:
                 v["xarray_only"] = False
@@ -157,8 +170,7 @@ def get_col_info(which: str = "daily") -> _DsetVarInfo:
     """
     import requests
 
-    if which not in {"hourly", "daily"}:
-        raise ValueError(f"Unknown/unsupported which: {which!r}")
+    validate_which(which)
 
     stored_attrs = load_attrs()
     url = f"{stored_attrs[which]['base_url']}/headers.txt"
