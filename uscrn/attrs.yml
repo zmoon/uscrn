@@ -1,15 +1,18 @@
 hourly:
-  # - https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/readme.txt
+  base_url: https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02
   columns:
+    # https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/readme.txt
     - name: wban
       long_name: WBAN number
       units: null
       description: The station WBAN number.
+      dtype: string
 
     - name: utc_date
       long_name: UTC date
       units: null
       description: The UTC date of the observation.
+      dtype: ignore
 
     - name: utc_time
       long_name: UTC time
@@ -18,11 +21,13 @@ hourly:
         The UTC time of the observation. Time is the end of the observed
         hour, so the 0000 hour is actually the last hour of the previous
         day's observation (starting just after 11:00 PM through midnight).
+      dtype: ignore
 
     - name: lst_date
       long_name: LST date
       units: null
       description: The Local Standard Time (LST) date of the observation.
+      dtype: ignore
 
     - name: lst_time
       long_name: LST time
@@ -30,6 +35,7 @@ hourly:
       description: >-
         The Local Standard Time (LST) time of the observation. Time is the
         end of the observed hour (see UTC_TIME description).
+      dtype: ignore
 
     - name: crx_vn
       long_name: station datalogger version number
@@ -38,6 +44,7 @@ hourly:
         The version number of the station datalogger program that was in effect
         at the time of the observation.
         Note: This field should be treated as text (i.e. string).
+      dtype: string
 
     - name: "{longitude,latitude}"
       long_name: station {longitude,latitude}
@@ -86,6 +93,7 @@ hourly:
       long_name: QC flag for hourly average solar radiation
       units: null
       description: QC flag for average global solar radiation. See Note G.
+      dtype: string
     - name: solarad_{max,min}
       long_name: hourly {maximum,minimum} solar radiation
       units: W m-2
@@ -94,6 +102,7 @@ hourly:
       long_name: QC flag for hourly {maximum,minimum} solar radiation
       units: null
       description: QC flag for {maximum,minimum} global solar radiation. See Note G.
+      dtype: string
 
     - name: sur_temp_type
       long_name: type of infrared surface temperature measurement
@@ -102,6 +111,7 @@ hourly:
         Type of infrared surface temperature measurement: 'R' denotes raw
         (uncorrected), 'C' denotes corrected, and 'U' when unknown/missing.
         See Note H.
+      dtype: string
     - name: sur_{temp,temp_max,temp_min}
       long_name: hourly {average,maximum,minimum} infrared surface temperature
       units: degree_Celsius
@@ -113,6 +123,7 @@ hourly:
         QC flag for {average,maximum,minimum} infrared surface temperature,
         in degrees C.
         See Note G.
+      dtype: string
 
     - name: rh_hr_avg
       long_name: hourly average relative humidity
@@ -122,6 +133,7 @@ hourly:
       long_name: QC flag for hourly average relative humidity
       units: null
       description: QC flag for hourly average relative humidity. See Note G.
+      dtype: string
 
     - name: soil_moisture_{5,10,20,50,100}
       long_name: hourly average soil moisture at {5,10,20,50,100} cm depth
@@ -149,6 +161,7 @@ hourly:
         Average soil moisture,
         in fractional volumetric water content (m3 m-3).
         See Note K.
+      xarray_only: true
     - name: soil_temp
       long_name: hourly average soil temperature
       units: degree_Celsius
@@ -156,6 +169,7 @@ hourly:
         Average soil temperature,
         in degrees C.
         See Note K.
+      xarray_only: true
 
   notes:
     A: All fields are separated from adjacent fields by at least one space.
@@ -224,18 +238,20 @@ hourly:
       variables from the earlier product, plus additional ones.
 
 daily:
-  # - https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
-  # - https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/readme.txt
+  base_url: https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01
   columns:
+    # https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/readme.txt
     - name: wban
       long_name: WBAN number
       units: null
       description: The station WBAN number.
+      dtype: string
 
     - name: lst_date
       long_name: LST date
       units: null
       description: The Local Standard Time (LST) date of the observation.
+      dtype: ignore
 
     - name: crx_vn
       long_name: station datalogger version number
@@ -284,6 +300,7 @@ daily:
         'C' denotes corrected measurements,
         and 'U' indicates unknown/missing.
         See Note G.
+      dtype: string
     - name: sur_temp_daily_{max,min,avg}
       long_name: daily {maximum,minimum,average} infrared surface temperature
       units: degree_Celsius
@@ -320,6 +337,7 @@ daily:
         Average soil moisture,
         in fractional volumetric water content (m3 m-3).
         See Notes I and J.
+      xarray_only: true
     - name: soil_temp_daily
       long_name: daily average soil temperature
       units: degree_Celsius
@@ -327,6 +345,7 @@ daily:
         Average soil temperature,
         in degrees C.
         See Notes I and J.
+      xarray_only: true
 
   notes:
     A: All fields are separated from adjacent fields by at least one space.

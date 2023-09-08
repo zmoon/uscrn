@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from functools import lru_cache, partial
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, NamedTuple
+
+import numpy as np
 
 HERE = Path(__file__).parent
 
@@ -59,7 +61,7 @@ def expand_strs(d: Mapping[str, str | None]) -> list[dict[str, str | None]]:
 
     opts: dict[str, list[str] | list[None]] = {}
     for k, v in d.items():
-        if v is not None:
+        if isinstance(v, str):
             opts[k] = expand_str(v)
         else:
             opts[k] = [v]
@@ -80,7 +82,7 @@ def expand_strs(d: Mapping[str, str | None]) -> list[dict[str, str | None]]:
 
 
 @lru_cache(1)
-def load_attrs():
+def load_attrs() -> dict[str, dict[str, Any]]:
     import itertools
 
     import yaml
@@ -88,8 +90,10 @@ def load_attrs():
     with open(HERE / "attrs.yml") as f:
         attrs = yaml.full_load(f)
 
+    whichs = [k for k in attrs if not k.startswith("_")]
+
     # Expand column entries
-    for which in ["hourly", "daily", "monthly"]:
+    for which in whichs:
         if which not in attrs:
             continue
         var_attrs = list(
@@ -99,14 +103,49 @@ def load_attrs():
         assert len(names) == len(set(names)), "Names should be unique"
         attrs[which]["columns"] = {a["name"]: a for a in var_attrs}
 
+    # dtype defaults to float32
+    # NOTE: Floats in the text files are represented with 7 chars only, little precision
+    for which in whichs:
+        for _, v in attrs[which]["columns"].items():
+            if "dtype" not in v:
+                v["dtype"] = "float32"
+
+    # xarray-only defaults to false
+    for which in whichs:
+        for _, v in attrs[which]["columns"].items():
+            if "xarray_only" not in v:
+                v["xarray_only"] = False
+
     return attrs
 
 
 class _DsetVarInfo(NamedTuple):
     names: list[str]
+    """Column (variable) names."""
+
     dtypes: dict[str, Any]  # TODO: better typing
+    """Maps column names to dtypes, for use in pandas ``read_csv``."""
+
     attrs: dict[str, dict[str, str | None]]
+    """Maps column names to attribute dicts with, e.g., ``long_name`` and ``units``."""
+
     notes: dict[str, str]
+    """Labeled notes associated with the dataset, mentioned in the readme."""
+
+
+_DTYPE_MAP = {
+    "string": str,
+    "float": np.float32,
+    "float32": np.float32,
+    "float64": np.float64,
+    "ignore": None,
+}
+
+
+def _map_dtype(dtype: str) -> type | None:
+    if dtype not in _DTYPE_MAP:
+        raise ValueError(f"Unknown dtype: {dtype!r}. Expected one of: {list(_DTYPE_MAP)}")
+    return _DTYPE_MAP[dtype]
 
 
 def get_col_info(which: str = "daily") -> _DsetVarInfo:
@@ -116,45 +155,13 @@ def get_col_info(which: str = "daily") -> _DsetVarInfo:
     For example:
     https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
     """
-    import numpy as np
     import requests
 
-    dtype_overrides = {
-        "wban": str,
-        "crx_vn": str,
-        "longitude": np.float64,  # since coords
-        "latitude": np.float64,
-    }
-    if which == "hourly":
-        url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/headers.txt"
-        for vn in [
-            "solarad_flag",
-            "solarad_max_flag",
-            "solarad_min_flag",
-            "sur_temp_type",
-            "sur_temp_flag",
-            "sur_temp_max_flag",
-            "sur_temp_min_flag",
-            "rh_hr_avg_flag",
-        ]:
-            dtype_overrides[vn] = str
-        dtype_removes = [
-            "utc_date",
-            "utc_time",
-            "lst_date",
-            "lst_time",
-        ]
-        # NOTE: reader combines the DATE and TIME columns of original dataset together to make TIMEs
-    elif which == "daily":
-        url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt"
-        dtype_overrides.update(
-            {
-                "sur_temp_daily_type": str,
-            }
-        )
-        dtype_removes = ["lst_date"]
-    else:
+    if which not in {"hourly", "daily"}:
         raise ValueError(f"Unknown/unsupported which: {which!r}")
+
+    stored_attrs = load_attrs()
+    url = f"{stored_attrs[which]['base_url']}/headers.txt"
 
     # "This file contains the following three lines: Field Number, Field Name and Unit of Measure."
     r = requests.get(url)
@@ -166,39 +173,25 @@ def get_col_info(which: str = "daily") -> _DsetVarInfo:
     assert len(nums) == len(columns)
     assert nums == [str(i + 1) for i in range(len(columns))]
 
-    # For consistency with meta, use 'wban' instead of 'wbanno'
+    # For consistency with meta, we use 'wban' instead of 'wbanno'
     assert columns[0] == "WBANNO"
     columns[0] = "WBAN"
 
-    # Lowercase better
+    # Lowercase is better
     columns = [c.lower() for c in columns]
 
     # Check consistency with attrs YAML file
     assert len(columns) == len(set(columns)), "Column names should be unique"
-    stored_attrs = load_attrs()
     attrs = stored_attrs[which]["columns"]
     notes = stored_attrs[which]["notes"]
-    in_table_var_attrs = {
-        k: v
-        for k, v in attrs.items()
-        if k
-        not in {
-            "soil_moisture_daily",
-            "soil_temp_daily",
-            "soil_temp",
-            "soil_moisture",
-        }
-    }
+    in_table_var_attrs = {k: v for k, v in attrs.items() if v["xarray_only"] is False}
     assert in_table_var_attrs.keys() == set(columns)
 
-    # NOTE: Floats in the text files are represented with 7 chars only, little precision
-    dtypes: dict[str, Any] = {c: np.float32 for c in columns}
-    for k, v in dtype_overrides.items():
-        dtypes[k] = v
-    for k in dtype_removes:
-        del dtypes[k]
+    # Construct dtype dict (for ``read_csv``)
+    dtypes: dict[str, Any] = {}
+    for k, v in attrs.items():
+        dtype = _map_dtype(v["dtype"])
+        if dtype is not None:
+            dtypes[k] = dtype
 
     return _DsetVarInfo(names=columns, dtypes=dtypes, attrs=attrs, notes=notes)
-
-
-get_daily_col_info = partial(get_col_info, which="daily")
