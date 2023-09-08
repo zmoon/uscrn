@@ -14,13 +14,18 @@ def test_example_xr():
     # df.to_parquet(fn, engine="fastparquet", compression="gzip")
 
     fn = DATA / "crn_2020.parquet.gz"
-    dfr = pd.read_parquet(fn, engine="fastparquet")
+    df = pd.read_parquet(fn, engine="fastparquet")
+    if "which" not in df.attrs:
+        import warnings
+
+        warnings.warn("No 'which' attribute found on dataframe. Adding.")
+        df.attrs["which"] = "daily"
 
     #
     # xarray
     #
 
-    ds = to_xarray(dfr)  # noqa: F841
+    ds = to_xarray(df)  # noqa: F841
 
     # # save
     # encoding = {

@@ -14,8 +14,8 @@ import xarray as xr
 from .attrs import DEFAULT_WHICH as _DEFAULT_WHICH
 from .attrs import get_col_info
 
-_DAILY = get_col_info("daily")
 _HOURLY = get_col_info("hourly")
+_DAILY = get_col_info("daily")
 
 
 def load_meta(*, cat: bool = False) -> pd.DataFrame:
@@ -46,43 +46,6 @@ def load_meta(*, cat: bool = False) -> pd.DataFrame:
             df[col] = df[col].astype("category")
 
     df.attrs.update(created=now)
-
-    return df
-
-
-def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
-    """Read a daily CRN file.
-
-    For example:
-    https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/2019/CRND0103-2019-CO_Boulder_14_W.txt
-
-    Parameters
-    ----------
-    cat
-        Convert some columns to pandas categorical type.
-    """
-    df = pd.read_csv(
-        fp,
-        delim_whitespace=True,
-        header=None,
-        names=_DAILY.names,
-        dtype=_DAILY.dtypes,
-        parse_dates=["lst_date"],
-        date_format=r"%Y%m%d",
-        na_values=["-99999", "-9999"],
-    )
-
-    # Set soil moisture -99 to NaN
-    sm_cols = df.columns[df.columns.str.startswith("soil_moisture_")]
-    df[sm_cols] = df[sm_cols].replace(-99, np.nan)
-
-    # Unknown datalogger version
-    df["crx_vn"] = df["crx_vn"].replace("-9.000", np.nan)
-
-    # Category cols?
-    if cat:
-        for col in ["sur_temp_daily_type"]:
-            df[col] = df[col].astype(pd.CategoricalDtype(categories=["R", "C", "U"], ordered=False))
 
     return df
 
@@ -124,6 +87,47 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
         for col in df.columns:
             if col.endswith("_flag"):
                 df[col] = df[col].astype(pd.CategoricalDtype(categories=["0", "3"], ordered=False))
+
+    df.attrs.update(which="hourly")
+
+    return df
+
+
+def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
+    """Read a daily CRN file.
+
+    For example:
+    https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/2019/CRND0103-2019-CO_Boulder_14_W.txt
+
+    Parameters
+    ----------
+    cat
+        Convert some columns to pandas categorical type.
+    """
+    df = pd.read_csv(
+        fp,
+        delim_whitespace=True,
+        header=None,
+        names=_DAILY.names,
+        dtype=_DAILY.dtypes,
+        parse_dates=["lst_date"],
+        date_format=r"%Y%m%d",
+        na_values=["-99999", "-9999"],
+    )
+
+    # Set soil moisture -99 to NaN
+    sm_cols = df.columns[df.columns.str.startswith("soil_moisture_")]
+    df[sm_cols] = df[sm_cols].replace(-99, np.nan)
+
+    # Unknown datalogger version
+    df["crx_vn"] = df["crx_vn"].replace("-9.000", np.nan)
+
+    # Category cols?
+    if cat:
+        for col in ["sur_temp_daily_type"]:
+            df[col] = df[col].astype(pd.CategoricalDtype(categories=["R", "C", "U"], ordered=False))
+
+    df.attrs.update(which="daily")
 
     return df
 
@@ -171,8 +175,6 @@ def get_crn(
     attrs = load_attrs()
 
     base_url = attrs[which]["base_url"]
-
-    now = datetime.datetime.now(datetime.timezone.utc)
 
     # Get available years from the main page
     # e.g. `>2000/<`
@@ -222,13 +224,16 @@ def get_crn(
     df = pd.concat(dfs, axis="index", ignore_index=True, copy=False)
 
     # Drop rows where all data cols are missing data?
-    non_data_cols = [
+    non_data_col_cands = [
         "wban",
         "lst_date",
+        "lst_time",
+        "utc_time",
         "crx_vn",
         "longitude",
         "latitude",
     ]
+    non_data_cols = [c for c in non_data_col_cands if c in df]
     assert set(non_data_cols) < set(df)
     data_cols = [c for c in df.columns if c not in non_data_cols]
     if dropna:
@@ -241,20 +246,37 @@ def get_crn(
         for col in ["sur_temp_daily_type"]:
             df[col] = df[col].astype("category")
 
-    df.attrs.update(created=now)
+    now = datetime.datetime.now(datetime.timezone.utc)
+    df.attrs.update(which=which, created=now, source=base_url)
 
     return df
 
 
-def to_xarray(df: pd.DataFrame) -> xr.Dataset:
+def to_xarray(df: pd.DataFrame, which: str | None = None) -> xr.Dataset:
     """Convert to an xarray dataset."""
+    from .attrs import load_attrs, validate_which
+
+    if which is None:
+        if "which" not in df.attrs:
+            raise NotImplementedError(
+                "Guessing `which` when not present in the df attr dict is not implemented. "
+                "Please specify."
+            )
+        which = df.attrs["which"]
+
+    validate_which(which)
+
+    info = load_attrs()
+    var_attrs = info[which]["columns"]
+    base_url = info[which]["base_url"]
+    time_var = info[which]["time_var"]
 
     ds = (
-        df.set_index(["wban", "lst_date"])
+        df.set_index(["wban", time_var])
         .to_xarray()
         .swap_dims(wban="site")
         .set_coords(["latitude", "longitude"])
-        .rename(lst_date="time")
+        .rename({time_var: "time"})
     )
     # Combine vertically resolved variables
     for pref in ["soil_moisture_", "soil_temp_"]:
@@ -286,7 +308,7 @@ def to_xarray(df: pd.DataFrame) -> xr.Dataset:
     # var attrs
     for vn in ds.variables:
         assert isinstance(vn, str)
-        attrs = _DAILY.attrs.get(vn)
+        attrs = var_attrs.get(vn)
         if attrs is None:
             if vn not in {"time", "depth"}:
                 warnings.warn(f"no attrs for {vn}")
@@ -295,7 +317,7 @@ def to_xarray(df: pd.DataFrame) -> xr.Dataset:
             k: attrs[k] for k in ["long_name", "units", "description"] if attrs[k] is not None
         }
         ds[vn].attrs.update(attrs_)
-    ds["time"].attrs.update(description=_DAILY.attrs["lst_date"]["description"])
+    ds["time"].attrs.update(description=var_attrs[time_var]["description"])
 
     # lat/lon don't vary in time
     lat0 = ds["latitude"].isel(time=0)
@@ -307,8 +329,13 @@ def to_xarray(df: pd.DataFrame) -> xr.Dataset:
 
     # ds attrs
     now = datetime.datetime.now(datetime.timezone.utc)
-    ds.attrs["title"] = "U.S. Climate Reference Network (USCRN) | daily | 2020"
+    unique_years = sorted(df[time_var].dt.year.unique())
+    if len(unique_years) == 1:
+        s_years = str(unique_years[0])
+    else:
+        s_years = f"{unique_years[0]}--{unique_years[-1]}"
+    ds.attrs["title"] = f"U.S. Climate Reference Network (USCRN) | {which} | {s_years}"
     ds.attrs["created"] = str(now)
-    ds.attrs["source"] = "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/"
+    ds.attrs["source"] = base_url
 
     return ds

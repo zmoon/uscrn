@@ -50,7 +50,8 @@ def test_load_attrs():
 
     for which in WHICHS:
         d = attrs[which]
-        assert set(d) == {"base_url", "columns", "notes"}
+        assert set(d) == {"base_url", "time_var", "columns", "notes"}
+        assert d["time_var"] in d["columns"]
 
 
 def test_load_col_info():
