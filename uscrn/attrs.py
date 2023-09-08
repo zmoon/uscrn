@@ -84,16 +84,21 @@ def expand_strs(d: Mapping[str, str | None]) -> list[dict[str, str | None]]:
 WHICHS: Final = ("hourly", "daily")
 """Identifiers for the datasets that have been implemented."""
 
-_ALL_WHICHES: Final = ("subhourly", "hourly", "daily", "monthly")
+_ALL_WHICHS: Final = ("subhourly", "hourly", "daily", "monthly")
 """All dataset identifiers, including those that may have not yet been implemented."""
 
 
 def validate_which(which: str) -> None:
-    if which not in _ALL_WHICHES:
-        raise ValueError(f"Invalid dataset identifier: {which!r}.")
+    if which not in _ALL_WHICHS:
+        msg = f"Invalid dataset identifier: {which!r}. Valid identifiers are: {_ALL_WHICHS}."
+        if len(WHICHS) < len(_ALL_WHICHS):
+            msg += f" These have been implemented: {WHICHS}."
+        raise ValueError(msg)
 
     if which not in WHICHS:
-        raise NotImplementedError(f"Dataset {which!r} not yet implemented.")
+        raise NotImplementedError(
+            f"Dataset {which!r} not yet implemented. These have been implemented: {WHICHS}."
+        )
 
 
 @lru_cache(1)
