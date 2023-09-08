@@ -1,10 +1,11 @@
+import inspect
 from typing import get_args
 
 import pytest
 
 from uscrn.attrs import (
     _ALL_WHICHS,
-    VALID_WHICHS,
+    DEFAULT_WHICH,
     WHICHS,
     expand_str,
     expand_strs,
@@ -57,7 +58,6 @@ def test_load_attrs():
     assert set(WHICHS) <= set(_ALL_WHICHS)
     whichs_guess = [k for k in attrs if not k.startswith("_")]
     assert set(whichs_guess) == set(WHICHS)
-    assert get_args(VALID_WHICHS) == WHICHS
 
     for which in WHICHS:
         d = attrs[which]
@@ -68,3 +68,22 @@ def test_load_attrs():
 def test_load_col_info():
     get_col_info("daily")
     get_col_info("hourly")
+
+
+@pytest.mark.skipif(
+    not hasattr(inspect, "get_annotations"), reason="Requires inspect.get_annotations (Python 3.10)"
+)
+def test_check_which_args():
+    from uscrn.get import get_crn, to_xarray
+
+    for fn in [get_col_info, get_crn]:
+        which_anno = inspect.get_annotations(fn, eval_str=True)["which"]
+        assert get_args(which_anno) == WHICHS
+        sig = inspect.signature(fn)
+        assert sig.parameters["which"].default == DEFAULT_WHICH
+
+    fn = to_xarray
+    which_anno = inspect.get_annotations(fn, eval_str=True)["which"]
+    assert get_args(get_args(which_anno)[0]) == WHICHS
+    sig = inspect.signature(fn)
+    assert sig.parameters["which"].default in {None, DEFAULT_WHICH}

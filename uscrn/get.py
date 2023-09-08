@@ -5,14 +5,13 @@ import re
 import warnings
 from collections.abc import Iterable
 from multiprocessing.pool import ThreadPool
+from typing import Literal
 
 import numpy as np
 import pandas as pd
 import requests
 import xarray as xr
 
-from .attrs import DEFAULT_WHICH as _DEFAULT_WHICH
-from .attrs import VALID_WHICHS as _VALID_WHICHS
 from .attrs import get_col_info
 
 _HOURLY = get_col_info("hourly")
@@ -141,7 +140,7 @@ _which_to_reader = {
 
 def get_crn(
     years: int | Iterable[int] | None = None,
-    which: _VALID_WHICHS = _DEFAULT_WHICH,
+    which: Literal["hourly", "daily"] = "daily",
     *,
     n_jobs: int | None = -2,
     cat: bool = False,
@@ -253,7 +252,7 @@ def get_crn(
     return df
 
 
-def to_xarray(df: pd.DataFrame, which: _VALID_WHICHS | None = None) -> xr.Dataset:
+def to_xarray(df: pd.DataFrame, which: Literal["hourly", "daily"] | None = None) -> xr.Dataset:
     """Convert to an xarray dataset."""
     from .attrs import load_attrs, validate_which
 

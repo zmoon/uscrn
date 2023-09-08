@@ -84,8 +84,6 @@ def expand_strs(d: Mapping[str, str | None]) -> list[dict[str, str | None]]:
 WHICHS: Final = ("hourly", "daily")
 """Identifiers for the datasets that have been implemented."""
 
-VALID_WHICHS = Literal["hourly", "daily"]
-
 _ALL_WHICHS: Final = ("subhourly", "hourly", "daily", "monthly")
 """All dataset identifiers, including those that may have not yet been implemented."""
 
@@ -172,7 +170,7 @@ def _map_dtype(dtype: str) -> type | None:
     return _DTYPE_MAP[dtype]
 
 
-def get_col_info(which: VALID_WHICHS = DEFAULT_WHICH) -> _DsetVarInfo:
+def get_col_info(which: Literal["hourly", "daily"] = "daily") -> _DsetVarInfo:
     """Read the column info file (the individual data files don't have headers)
     and stored attribute data.
 
