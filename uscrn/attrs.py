@@ -87,6 +87,8 @@ WHICHS: Final = ("hourly", "daily")
 _ALL_WHICHS: Final = ("subhourly", "hourly", "daily", "monthly")
 """All dataset identifiers, including those that may have not yet been implemented."""
 
+DEFAULT_WHICH: Final = "daily"
+
 
 def validate_which(which: str) -> None:
     if which not in _ALL_WHICHS:
@@ -166,7 +168,7 @@ def _map_dtype(dtype: str) -> type | None:
     return _DTYPE_MAP[dtype]
 
 
-def get_col_info(which: str = "daily") -> _DsetVarInfo:
+def get_col_info(which: str = DEFAULT_WHICH) -> _DsetVarInfo:
     """Read the column info file (the individual data files don't have headers)
     and stored attribute data.
 

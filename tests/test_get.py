@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from uscrn import load_meta, read_daily, read_hourly, to_xarray
+from uscrn.get import _which_to_reader, load_meta, read_daily, read_hourly, to_xarray
 
 HERE = Path(__file__).parent
 DATA = HERE / "data"
@@ -49,3 +49,9 @@ def test_get_daily():
         "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/2019/CRND0103-2019-CO_Boulder_14_W.txt"
     )
     assert len(df) > 0
+
+
+def test_which_to_reader():
+    from uscrn.attrs import WHICHS
+
+    assert _which_to_reader.keys() == set(WHICHS)

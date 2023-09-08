@@ -11,6 +11,7 @@ import pandas as pd
 import requests
 import xarray as xr
 
+from .attrs import DEFAULT_WHICH as _DEFAULT_WHICH
 from .attrs import get_col_info
 
 _DAILY = get_col_info("daily")
@@ -127,8 +128,15 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
     return df
 
 
+_which_to_reader = {
+    "hourly": read_hourly,
+    "daily": read_daily,
+}
+
+
 def get_crn(
     years: int | Iterable[int] | None = None,
+    which: str = _DEFAULT_WHICH,
     *,
     n_jobs: int | None = -2,
     cat: bool = False,
@@ -156,7 +164,13 @@ def get_crn(
 
     from joblib import Parallel, delayed
 
-    base_url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01"
+    from .attrs import load_attrs, validate_which
+
+    validate_which(which)
+
+    attrs = load_attrs()
+
+    base_url = attrs[which]["base_url"]
 
     now = datetime.datetime.now(datetime.timezone.utc)
 
@@ -202,20 +216,21 @@ def get_crn(
     print(urls[-1])
 
     print("Reading files...")
-    dfs = Parallel(n_jobs=n_jobs, verbose=10)(delayed(read_daily)(url) for url in urls)
+    read = _which_to_reader[which]
+    dfs = Parallel(n_jobs=n_jobs, verbose=10)(delayed(read)(url) for url in urls)
 
     df = pd.concat(dfs, axis="index", ignore_index=True, copy=False)
 
     # Drop rows where all data cols are missing data?
-    site_cols = [
+    non_data_cols = [
         "wban",
         "lst_date",
         "crx_vn",
         "longitude",
         "latitude",
     ]
-    assert set(site_cols) < set(df)
-    data_cols = [c for c in df.columns if c not in site_cols]
+    assert set(non_data_cols) < set(df)
+    data_cols = [c for c in df.columns if c not in non_data_cols]
     if dropna:
         df = df.dropna(subset=data_cols, how="all").reset_index(drop=True)
         if df.empty:
