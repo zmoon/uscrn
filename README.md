@@ -12,7 +12,7 @@ import uscrn as crn
 
 df = crn.get_data(2019, "hourly", n_jobs=6)
 
-ds = to_xarray(df)
+ds = crn.to_xarray(df)
 ```
 
 Mamba install example:
