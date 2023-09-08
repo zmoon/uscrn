@@ -182,6 +182,16 @@ _which_to_reader = {
 }
 
 
+def read(fp, *, cat: bool = False) -> pd.DataFrame:
+    """Read a CRN file, auto-detecting which reader to use based on file name."""
+    from .attrs import validate_which
+
+    res = parse_url(fp)
+    validate_which(res.which)
+
+    return _which_to_reader[res.which](fp, cat=cat)
+
+
 def get_crn(
     years: int | Iterable[int] | None = None,
     which: Literal["hourly", "daily"] = "daily",
