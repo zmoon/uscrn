@@ -192,7 +192,7 @@ def read(fp, *, cat: bool = False) -> pd.DataFrame:
     return _which_to_reader[res.which](fp, cat=cat)
 
 
-def get_crn(
+def get_data(
     years: int | Iterable[int] | None = None,
     which: Literal["hourly", "daily"] = "daily",
     *,
@@ -200,16 +200,18 @@ def get_crn(
     cat: bool = False,
     dropna: bool = False,
 ) -> pd.DataFrame:
-    """Get daily CRN data.
+    """Get CRN data.
 
     * Home page: https://www.ncei.noaa.gov/access/crn/
     * Info: https://www.ncei.noaa.gov/access/crn/qcdatasets.html
-    * Data: https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/
+    * Data: https://www.ncei.noaa.gov/pub/data/uscrn/products/
 
     Parameters
     ----------
     years
         Year(s) to get data for. If ``None`` (default), get all available years.
+    which
+        Which dataset.
     n_jobs
         Number of parallel joblib jobs to use for loading the individual files.
         The default is ``-2``, which means to use one less than joblib's detected max.
@@ -314,7 +316,15 @@ def get_crn(
 
 
 def to_xarray(df: pd.DataFrame, which: Literal["hourly", "daily"] | None = None) -> xr.Dataset:
-    """Convert to an xarray dataset."""
+    """Convert to an xarray dataset.
+
+    Parameters
+    ----------
+    df
+        Input dataframe, created using :func:`get_data` or one of the readers.
+    which
+        Which dataset. Will attempt to guess by default. Specify to override this.
+    """
     from .attrs import load_attrs, validate_which
 
     if which is None:

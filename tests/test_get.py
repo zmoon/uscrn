@@ -7,7 +7,7 @@ import pytest
 import uscrn
 from uscrn.get import (
     _which_to_reader,
-    get_crn,
+    get_data,
     load_meta,
     parse_url,
     read_daily,
@@ -31,7 +31,7 @@ uscrn.get._GET_CAP = N
 
 def test_example_xr():
     # Parquet file created with:
-    # df = get_crn(2020, cat=True)
+    # df = get_data(2020, cat=True)
     # df.to_parquet(fn, engine="fastparquet", compression="gzip")
 
     fn = DATA / "crn_2020.parquet.gz"
@@ -101,7 +101,7 @@ def test_parse_url(which, url):
 
 @pytest.mark.parametrize("which", uscrn.attrs.WHICHS)
 def test_get(which):
-    df = get_crn(2019, which=which, n_jobs=N)
+    df = get_data(2019, which=which, n_jobs=N)
     assert df.wban.nunique() == N
 
     ds = to_xarray(df)
