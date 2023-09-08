@@ -1,11 +1,19 @@
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
-from uscrn.get import _which_to_reader, load_meta, read_daily, read_hourly, to_xarray
+from uscrn.get import _which_to_reader, load_meta, parse_url, read_daily, read_hourly, to_xarray
 
 HERE = Path(__file__).parent
 DATA = HERE / "data"
+
+EXAMPLE_URL = {
+    "subhourly": "https://www.ncei.noaa.gov/pub/data/uscrn/products/subhourly01/2019/CRNS0101-05-2019-CO_Boulder_14_W.txt",
+    "hourly": "https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/2019/CRNH0203-2019-CO_Boulder_14_W.txt",
+    "daily": "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/2019/CRND0103-2019-CO_Boulder_14_W.txt",
+    "monthly": "https://www.ncei.noaa.gov/pub/data/uscrn/products/monthly01/CRNM0102-CO_Boulder_14_W.txt",
+}
 
 
 def test_example_xr():
@@ -43,16 +51,12 @@ def test_load_meta():
 
 
 def test_get_hourly():
-    df = read_hourly(
-        "https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/2019/CRNH0203-2019-CO_Boulder_14_W.txt"
-    )
+    df = read_hourly(EXAMPLE_URL["hourly"])
     assert len(df) > 0
 
 
 def test_get_daily():
-    df = read_daily(
-        "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/2019/CRND0103-2019-CO_Boulder_14_W.txt"
-    )
+    df = read_daily(EXAMPLE_URL["daily"])
     assert len(df) > 0
 
 
@@ -60,3 +64,12 @@ def test_which_to_reader():
     from uscrn.attrs import WHICHS
 
     assert _which_to_reader.keys() == set(WHICHS)
+
+
+@pytest.mark.parametrize("which, url", EXAMPLE_URL.items())
+def test_parse_url(which, url):
+    res = parse_url(url)
+    assert res.which == which
+    assert res.state == "CO"
+    assert res.location == "Boulder"
+    assert res.vector == "14 W"

@@ -5,7 +5,7 @@ import re
 import warnings
 from collections.abc import Iterable
 from multiprocessing.pool import ThreadPool
-from typing import Literal
+from typing import Literal, NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -48,6 +48,51 @@ def load_meta(*, cat: bool = False) -> pd.DataFrame:
     df.attrs.update(created=now)
 
     return df
+
+
+class _ParseRes(NamedTuple):
+    fp: str
+    which: str
+    group: str
+    state: str
+    location: str
+    vector: str
+
+
+def parse_fp(fp: str) -> _ParseRes:
+    """Parse CRN file path."""
+    from pathlib import Path
+
+    p = Path(fp)
+
+    if p.name.startswith("CRNS0"):
+        which = "subhourly"
+    elif p.name.startswith("CRNH0"):
+        which = "hourly"
+    elif p.name.startswith("CRND0"):
+        which = "daily"
+    elif p.name.startswith("CRNM0"):
+        which = "monthly"
+    else:
+        raise ValueError(
+            "Unknown CRN file type. Expected the name to start with `CRN{S,H,D,M}0`. "
+            f"Got: {p.name!r}."
+        )
+
+    parts = p.stem.split("_")
+    group = parts[0]
+    state = group.split("-")[-1]
+    location = " ".join(parts[1:-2])
+    vector = " ".join(parts[-2:])
+
+    return _ParseRes(fp=fp, which=which, group=group, state=state, location=location, vector=vector)
+
+
+def parse_url(url: str) -> _ParseRes:
+    """Parse CRN file path from URL."""
+    from urllib.parse import urlsplit
+
+    return parse_fp(urlsplit(url).path)
 
 
 def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
