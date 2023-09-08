@@ -20,6 +20,11 @@ _HOURLY = get_col_info("hourly")
 def load_meta(*, cat: bool = False) -> pd.DataFrame:
     """Load the station metadata table.
 
+    Parameters
+    ----------
+    cat
+        Convert some columns to pandas categorical type.
+
     https://www.ncei.noaa.gov/pub/data/uscrn/products/stations.tsv
     """
     url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/stations.tsv"
@@ -49,6 +54,11 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
 
     For example:
     https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/2019/CRND0103-2019-CO_Boulder_14_W.txt
+
+    Parameters
+    ----------
+    cat
+        Convert some columns to pandas categorical type.
     """
     df = pd.read_csv(
         fp,
@@ -81,6 +91,11 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
 
     For example:
     https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/2019/CRNH0203-2019-CO_Boulder_14_W.txt
+
+    Parameters
+    ----------
+    cat
+        Convert some columns to pandas categorical type.
     """
     df = pd.read_csv(
         fp,
@@ -121,11 +136,21 @@ def get_crn(
 ) -> pd.DataFrame:
     """Get daily CRN data.
 
-    Home page: https://www.ncei.noaa.gov/access/crn/
+    * Home page: https://www.ncei.noaa.gov/access/crn/
+    * Info: https://www.ncei.noaa.gov/access/crn/qcdatasets.html
+    * Data: https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/
 
-    Info: https://www.ncei.noaa.gov/access/crn/qcdatasets.html
-
-    Data: https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/
+    Parameters
+    ----------
+    years
+        Year(s) to get data for. If ``None`` (default), get all available years.
+    n_jobs
+        Number of parallel joblib jobs to use for loading the individual files.
+        The default is ``-2``, which means to use one less than joblib's detected max.
+    cat
+        Convert some columns to pandas categorical type.
+    dropna
+        Drop rows where all data cols are missing data.
     """
     from itertools import chain
 
