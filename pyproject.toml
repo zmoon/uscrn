@@ -29,6 +29,7 @@ test = [
     "mypy",
     "netCDF4",
     "pandas-stubs",
+    "pyarrow",
     "pytest",
 ]
 dev = [
