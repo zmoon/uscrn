@@ -2,7 +2,6 @@ hourly:
   base_url: https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02
   time_var: utc_time
   columns:
-    # https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/readme.txt
     - name: wban
       long_name: WBAN number
       units: null
@@ -181,7 +180,6 @@ daily:
   base_url: https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01
   time_var: lst_date
   columns:
-    # https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/readme.txt
     - name: wban
       long_name: WBAN number
       units: null
@@ -293,7 +291,6 @@ monthly:
   base_url: https://www.ncei.noaa.gov/pub/data/uscrn/products/monthly01
   time_var: lst_yrmo
   columns:
-    # https://www.ncei.noaa.gov/pub/data/uscrn/products/monthly01/readme.txt
     - name: wban
       long_name: WBAN number
       units: null
