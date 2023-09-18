@@ -7,7 +7,6 @@ import datetime
 import re
 import warnings
 from collections.abc import Iterable
-from multiprocessing.pool import ThreadPool
 from typing import Literal, NamedTuple
 
 import numpy as np
@@ -241,7 +240,7 @@ def read(fp, *, cat: bool = False) -> pd.DataFrame:
 
 def get_data(
     years: int | Iterable[int] | None = None,
-    which: Literal["hourly", "daily"] = "daily",
+    which: Literal["hourly", "daily", "monthly"] = "daily",
     *,
     n_jobs: int | None = -2,
     cat: bool = False,
@@ -281,39 +280,47 @@ def get_data(
 
     # Get available years from the main page
     # e.g. `>2000/<`
+    print("Discovering files...")
     r = requests.get(f"{base_url}/")
     r.raise_for_status()
-    available_years: list[int] = [int(s) for s in re.findall(r">([0-9]{4})/?<", r.text)]
-
-    years_: list[int]
-    if isinstance(years, int):
-        years_ = [years]
-    elif years is None:
-        years_ = available_years[:]
-    else:
-        years_ = list(years)
-
-    # Discover files
-    print("Discovering files...")
-
-    def get_year_urls(year):
-        if year not in available_years:
-            raise ValueError(f"year {year} not in detected available CRN years {available_years}")
-
-        # Get filenames from the year page
-        # e.g. `>CRND0103-2020-TX_Palestine_6_WNW.txt<`
-        url = f"{base_url}/{year}/"
-        r = requests.get(url)
-        r.raise_for_status()
+    if which == "monthly":
+        # No year subdirectories
         fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
-        if not fns:
-            warnings.warn(f"no CRN files found for year {year} (url {url})", stacklevel=2)
+        urls = [f"{base_url}/{fn}" for fn in fns]
+    else:
+        from multiprocessing.pool import ThreadPool
 
-        return (f"{base_url}/{year}/{fn}" for fn in fns)
+        # Year subdirectories
+        available_years: list[int] = [int(s) for s in re.findall(r">([0-9]{4})/?<", r.text)]
 
-    pool = ThreadPool(processes=min(len(years_), 10))
-    urls = list(chain.from_iterable(pool.imap(get_year_urls, years_)))
-    pool.close()
+        years_: list[int]
+        if isinstance(years, int):
+            years_ = [years]
+        elif years is None:
+            years_ = available_years[:]
+        else:
+            years_ = list(years)
+
+        def get_year_urls(year):
+            if year not in available_years:
+                raise ValueError(
+                    f"year {year} not in detected available CRN years {available_years}"
+                )
+
+            # Get filenames from the year page
+            # e.g. `>CRND0103-2020-TX_Palestine_6_WNW.txt<`
+            url = f"{base_url}/{year}/"
+            r = requests.get(url)
+            r.raise_for_status()
+            fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
+            if not fns:
+                warnings.warn(f"no CRN files found for year {year} (url {url})", stacklevel=2)
+
+            return (f"{base_url}/{year}/{fn}" for fn in fns)
+
+        pool = ThreadPool(processes=min(len(years_), 10))
+        urls = list(chain.from_iterable(pool.imap(get_year_urls, years_)))
+        pool.close()
 
     print(f"{len(urls)} files found")
     print(urls[0])
