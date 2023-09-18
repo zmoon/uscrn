@@ -369,7 +369,10 @@ def get_data(
     return df
 
 
-def to_xarray(df: pd.DataFrame, which: Literal["hourly", "daily"] | None = None) -> xr.Dataset:
+def to_xarray(
+    df: pd.DataFrame,
+    which: Literal["hourly", "daily", "monthly"] | None = None,
+) -> xr.Dataset:
     """Convert to an xarray dataset.
 
     Parameters
@@ -404,26 +407,27 @@ def to_xarray(df: pd.DataFrame, which: Literal["hourly", "daily"] | None = None)
         .rename({time_var: "time"})
     )
     # Combine vertically resolved variables
-    for pref in ["soil_moisture_", "soil_temp_"]:
-        vns = list(df.columns[df.columns.str.startswith(pref)])
-        depths = sorted(float(vn.split("_")[2]) for vn in vns)
-        vn_new_parts = vns[0].split("_")
-        del vn_new_parts[2]
-        vn_new = "_".join(vn_new_parts)
+    if which in {"hourly", "daily"}:
+        for pref in ["soil_moisture_", "soil_temp_"]:
+            vns = list(df.columns[df.columns.str.startswith(pref)])
+            depths = sorted(float(vn.split("_")[2]) for vn in vns)
+            vn_new_parts = vns[0].split("_")
+            del vn_new_parts[2]
+            vn_new = "_".join(vn_new_parts)
 
-        if "depth" not in ds:
-            ds["depth"] = (
-                "depth",
-                depths,
-                {"long_name": "depth below surface", "units": "cm"},
-            )
+            if "depth" not in ds:
+                ds["depth"] = (
+                    "depth",
+                    depths,
+                    {"long_name": "depth below surface", "units": "cm"},
+                )
 
-        # Ensure sorted correctly
-        vns.sort(key=lambda vn: int(vn.split("_")[2]))
+            # Ensure sorted correctly
+            vns.sort(key=lambda vn: int(vn.split("_")[2]))
 
-        # New var
-        ds[vn_new] = xr.concat([ds[vn] for vn in vns], dim="depth")
-        ds = ds.drop_vars(vns)
+            # New var
+            ds[vn_new] = xr.concat([ds[vn] for vn in vns], dim="depth")
+            ds = ds.drop_vars(vns)
 
     # float32
     for vn in ds.data_vars:  # leave coords

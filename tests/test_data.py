@@ -105,5 +105,8 @@ def test_get(which):
     assert df.wban.nunique() == N
 
     ds = to_xarray(df)
-    assert ds.title == f"U.S. Climate Reference Network (USCRN) | {which} | 2019"
+    if which == "monthly":
+        assert ds.title.startswith(f"U.S. Climate Reference Network (USCRN) | {which}")
+    else:
+        assert ds.title == f"U.S. Climate Reference Network (USCRN) | {which} | 2019"
     assert set(np.unique(ds.time.dt.year)) >= {2019}
