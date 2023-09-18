@@ -105,6 +105,7 @@ def validate_which(which: str) -> None:
 
 @lru_cache(1)
 def load_attrs() -> dict[str, dict[str, Any]]:
+    """Load information derived from the attrs YAML file."""
     import itertools
 
     import yaml
@@ -184,16 +185,18 @@ def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _Dse
     For example:
     https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
     """
+    from textwrap import dedent
+
     validate_which(which)
 
     stored_attrs = load_attrs()
-    headers_txt, _ = _get_docs(which)
+    headers_txt, readme_txt = _get_docs(which)
 
     # "This file contains the following three lines: Field Number, Field Name and Unit of Measure."
-    lines = headers_txt.splitlines()
-    assert len(lines) == 3
-    nums = lines[0].split()
-    columns = lines[1].split()
+    readme_lines = headers_txt.splitlines()
+    assert len(readme_lines) == 3
+    nums = readme_lines[0].split()
+    columns = readme_lines[1].split()
     assert len(nums) == len(columns)
     assert nums == [str(i + 1) for i in range(len(columns))]
 
@@ -222,7 +225,16 @@ def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _Dse
     assert in_table_var_attrs.keys() == set(columns)
 
     # Notes
-    notes = f"{stored_attrs[which]['base_url']}/readme.txt"
+    readme_url = f"{stored_attrs[which]['base_url']}/readme.txt"
+    readme_lines = readme_txt.splitlines()
+    notes = f"Notes from {readme_url}:\n"
+    for i, line in enumerate(readme_lines):
+        line_ = line.strip()
+        if line_.startswith("IMPORTANT NOTES:"):
+            notes += dedent("\n".join(readme_lines[i + 1 :]))
+            break
+    else:
+        raise AssertionError("Expected readme line starting with 'IMPORTANT NOTES:'")
 
     # Construct dtype dict (for ``read_csv``)
     dtypes: dict[str, Any] = {}
