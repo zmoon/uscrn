@@ -390,7 +390,7 @@ def to_xarray(
     which
         Which dataset. Will attempt to guess by default. Specify to override this.
     """
-    from .attrs import load_attrs, validate_which
+    from .attrs import get_col_info, load_attrs, validate_which
 
     if which is None:
         if "which" not in df.attrs:
@@ -406,6 +406,9 @@ def to_xarray(
     var_attrs = info[which]["columns"]
     base_url = info[which]["base_url"]
     time_var = info[which]["time_var"]
+
+    info2 = get_col_info(which)
+    notes = info2.notes
 
     ds = (
         df.set_index(["wban", time_var])
@@ -494,5 +497,6 @@ def to_xarray(
     ds.attrs["title"] = f"U.S. Climate Reference Network (USCRN) | {which} | {s_years}"
     ds.attrs["created"] = str(now)
     ds.attrs["source"] = base_url
+    ds.attrs["notes"] = notes
 
     return ds
