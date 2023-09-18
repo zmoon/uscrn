@@ -274,6 +274,9 @@ def get_data(
 
     validate_which(which)
 
+    if which == "monthly" and years is not None:
+        warnings.warn("`years` ignored for monthly data.", stacklevel=2)
+
     attrs = load_attrs()
 
     base_url = attrs[which]["base_url"]

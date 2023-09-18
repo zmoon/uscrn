@@ -101,12 +101,12 @@ def test_parse_url(which, url):
 
 @pytest.mark.parametrize("which", uscrn.attrs.WHICHS)
 def test_get(which):
-    df = get_data(2019, which=which, n_jobs=N)
+    df = get_data(2019 if which != "monthly" else None, which=which, n_jobs=N)
     assert df.wban.nunique() == N
 
     ds = to_xarray(df)
     if which == "monthly":
-        assert ds.title.startswith(f"U.S. Climate Reference Network (USCRN) | {which}")
+        assert ds.title.startswith(f"U.S. Climate Reference Network (USCRN) | {which} | 2018--")
     else:
         assert ds.title == f"U.S. Climate Reference Network (USCRN) | {which} | 2019"
     assert set(np.unique(ds.time.dt.year)) >= {2019}
