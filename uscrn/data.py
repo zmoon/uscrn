@@ -275,7 +275,7 @@ def get_data(
     validate_which(which)
 
     if which == "monthly" and years is not None:
-        warnings.warn("`years` ignored for monthly data.", stacklevel=2)
+        warnings.warn("`years` ignored for monthly data.", stacklevel=1)
 
     attrs = load_attrs()
 
@@ -357,7 +357,7 @@ def get_data(
     if dropna:
         df = df.dropna(subset=data_cols, how="all").reset_index(drop=True)
         if df.empty:
-            warnings.warn("CRN dataframe empty after dropping missing data rows", stacklevel=2)
+            warnings.warn("CRN dataframe empty after dropping missing data rows", stacklevel=1)
 
     # Category cols?
     if cat:
