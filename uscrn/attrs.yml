@@ -411,3 +411,76 @@ daily:
       Southwest Regional Climate Reference Network (USRCRN) stations on
       June 1, 2014. The historical data for these stations remain
       available.
+
+_monthly:
+  base_url: https://www.ncei.noaa.gov/pub/data/uscrn/products/monthly01
+  time_var: lst_yrmo
+  columns:
+    # https://www.ncei.noaa.gov/pub/data/uscrn/products/monthly01/readme.txt
+    - name: wban
+      long_name: WBAN number
+      units: null
+      description: The station WBAN number.
+      dtype: string
+
+    - name: lst_yrmo
+      long_name: LST month
+      units: null
+      description: The Local Standard Time (LST) year/month of the observation.
+      dtype: ignore
+
+    - name: crx_vn_monthly
+      long_name: station datalogger version number
+      units: null
+      description: >-
+        The version number of the station datalogger program that was in effect
+        at the end of the month.
+        Note: This field should be treated as text (i.e. string).
+      dtype: string
+
+    - name: "precise_{longitude,latitude}"
+      long_name: station {longitude,latitude}
+      units: "{degree_east,degree_north}"
+      description: Station {longitude,latitude}, using WGS-84, with a precision of 4 decimal places.
+
+    - name: t_monthly_{max,min,avg}
+      long_name: monthly {maximum,minimum,average} air temperature
+      units: degree_Celsius
+      description: "{Maximum,Minimum,Average} air temperature, in degrees C. See Note F."
+    - name: t_monthly_mean
+      long_name: (t_monthly_max + t_monthly_min) / 2
+      units: degree_Celsius
+      description: >-
+        Mean air temperature, in degrees C, calculated using the typical historical approach:
+        (T_MONTHLY_MAX + T_MONTHLY_MIN) / 2.
+        See Note F.
+
+    - name: p_monthly_calc
+      long_name: monthly total precipitation
+      units: mm
+      description: Total amount of precipitation, in mm. See Note G.
+
+    - name: solarad_monthly_avg
+      long_name: monthly average daily total solar radiation
+      units: MJ m-2
+      description: >-
+        The average daily total solar energy received, in MJ m-2.
+        See Note H.
+
+    - name: sur_temp_monthly_type
+      long_name: type of infrared surface temperature measurement
+      units: null
+      description: >-
+        Type of infrared surface temperature measurement.
+        'R' denotes raw measurements,
+        'C' denotes corrected measurements,
+        and 'U' indicates unknown/missing.
+        See Note I.
+      dtype: string
+      categories: [R, C, U]
+    - name: sur_temp_monthly_{max,min,avg}
+      long_name: monthly {maximum,minimum,average} infrared surface temperature
+      units: degree_Celsius
+      description: >-
+        {Maximum,Minimum,Average} infrared surface temperature, in degrees C.
+        See note J.
