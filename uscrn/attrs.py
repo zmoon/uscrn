@@ -147,7 +147,7 @@ def load_attrs() -> dict[str, dict[str, Any]]:
 
 class _DsetVarInfo(NamedTuple):
     names: list[str]
-    """Column (variable) names."""
+    """Column (variable) names, in the correct order."""
 
     dtypes: dict[str, Any]  # TODO: better typing
     """Maps column names to dtypes, for use in pandas ``read_csv``."""
