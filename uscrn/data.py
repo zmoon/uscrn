@@ -19,12 +19,12 @@ _GET_CAP: int | None = None
 def load_meta(*, cat: bool = False) -> pd.DataFrame:
     """Load the station metadata table.
 
+    https://www.ncei.noaa.gov/pub/data/uscrn/products/stations.tsv
+
     Parameters
     ----------
     cat
         Convert some columns to pandas categorical type.
-
-    https://www.ncei.noaa.gov/pub/data/uscrn/products/stations.tsv
     """
     url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/stations.tsv"
 
