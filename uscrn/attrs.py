@@ -184,17 +184,13 @@ def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _Dse
     For example:
     https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
     """
-    import requests
-
     validate_which(which)
 
     stored_attrs = load_attrs()
-    url = f"{stored_attrs[which]['base_url']}/headers.txt"
+    headers_txt, _ = _get_docs(which)
 
     # "This file contains the following three lines: Field Number, Field Name and Unit of Measure."
-    r = requests.get(url)
-    r.raise_for_status()
-    lines = r.text.splitlines()
+    lines = headers_txt.splitlines()
     assert len(lines) == 3
     nums = lines[0].split()
     columns = lines[1].split()
@@ -278,7 +274,7 @@ def _get_docs(which: Literal["hourly", "daily", "monthly"] = "daily") -> tuple[s
     cache_dir = HERE / "cache"
     cache_dir.mkdir(exist_ok=True)
 
-    headers_txt = (get(f"{base_url}/headers.txt", cache_dir / f"{which}_headers.txt"),)
-    readme_txt = (get(f"{base_url}/readme.txt", cache_dir / f"{which}_readme.txt"),)
+    headers_txt = get(f"{base_url}/headers.txt", cache_dir / f"{which}_headers.txt")
+    readme_txt = get(f"{base_url}/readme.txt", cache_dir / f"{which}_readme.txt")
 
     return headers_txt, readme_txt
