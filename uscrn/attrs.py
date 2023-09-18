@@ -105,7 +105,10 @@ def validate_which(which: str) -> None:
 
 @lru_cache(1)
 def load_attrs() -> dict[str, dict[str, Any]]:
-    """Load information derived from the attrs YAML file."""
+    """Load information derived from the attrs YAML file.
+
+    This is cached for the lifetime of the process.
+    """
     import itertools
 
     import yaml
@@ -178,9 +181,12 @@ def _map_dtype(dtype: str) -> type | None:
     return _DTYPE_MAP[dtype]
 
 
+@lru_cache(len(WHICHS))
 def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _DsetVarInfo:
     """Read the column info file (the individual data files don't have headers)
     and stored attribute data, preparing info for use in ``read_csv``.
+
+    This is cached for the lifetime of the process.
 
     For example:
     https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt

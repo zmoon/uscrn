@@ -14,13 +14,8 @@ import pandas as pd
 import requests
 import xarray as xr
 
-from .attrs import get_col_info
-
-_HOURLY = get_col_info("hourly")
-_DAILY = get_col_info("daily")
-_MONTHLY = get_col_info("monthly")
-
 _GET_CAP: int | None = None
+"""Restrict how many files to load, for testing purposes."""
 
 
 def load_meta(*, cat: bool = False) -> pd.DataFrame:
@@ -111,12 +106,15 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
     cat
         Convert some columns to pandas categorical type.
     """
+    from .attrs import get_col_info
+
+    col_info = get_col_info("hourly")
     df = pd.read_csv(
         fp,
         delim_whitespace=True,
         header=None,
-        names=_HOURLY.names,
-        dtype=_HOURLY.dtypes,
+        names=col_info.names,
+        dtype=col_info.dtypes,
         parse_dates={"utc_time_": ["utc_date", "utc_time"], "lst_time_": ["lst_date", "lst_time"]},
         date_format=r"%Y%m%d %H%M",
         na_values=["-99999", "-9999"],
@@ -132,7 +130,7 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
 
     # Category cols?
     if cat:
-        for col, cats in _HOURLY.categorical.items():
+        for col, cats in col_info.categorical.items():
             df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
     df.attrs.update(which="hourly")
@@ -151,12 +149,15 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     cat
         Convert some columns to pandas categorical type.
     """
+    from .attrs import get_col_info
+
+    col_info = get_col_info("daily")
     df = pd.read_csv(
         fp,
         delim_whitespace=True,
         header=None,
-        names=_DAILY.names,
-        dtype=_DAILY.dtypes,
+        names=col_info.names,
+        dtype=col_info.dtypes,
         parse_dates=["lst_date"],
         date_format=r"%Y%m%d",
         na_values=["-99999", "-9999"],
@@ -171,7 +172,7 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
 
     # Category cols?
     if cat:
-        for col, cats in _DAILY.categorical.items():
+        for col, cats in col_info.categorical.items():
             df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
     df.attrs.update(which="daily")
@@ -193,12 +194,15 @@ def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
     cat
         Convert some columns to pandas categorical type.
     """
+    from .attrs import get_col_info
+
+    col_info = get_col_info("monthly")
     df = pd.read_csv(
         fp,
         delim_whitespace=True,
         header=None,
-        names=_MONTHLY.names,
-        dtype=_MONTHLY.dtypes,
+        names=col_info.names,
+        dtype=col_info.dtypes,
         parse_dates=["lst_yrmo"],
         date_format=r"%Y%m",
         na_values=["-99999", "-9999"],
@@ -213,7 +217,7 @@ def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
 
     # Category cols?
     if cat:
-        for col, cats in _MONTHLY.categorical.items():
+        for col, cats in col_info.categorical.items():
             df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
     df.attrs.update(which="monthly")
