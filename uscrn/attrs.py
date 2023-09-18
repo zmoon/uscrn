@@ -155,7 +155,7 @@ class _DsetVarInfo(NamedTuple):
     attrs: dict[str, dict[str, str | None]]
     """Maps column names to attribute dicts with, e.g., ``long_name`` and ``units``."""
 
-    notes: dict[str, str]
+    notes: str
     """Labeled notes associated with the dataset, mentioned in the readme."""
 
     categorical: dict[str, list[Any]]
@@ -222,9 +222,11 @@ def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _Dse
     # Check consistency with attrs YAML file
     assert len(columns) == len(set(columns)), "Column names should be unique"
     attrs = stored_attrs[which]["columns"]
-    notes = stored_attrs[which]["notes"]
     in_table_var_attrs = {k: v for k, v in attrs.items() if v["xarray_only"] is False}
     assert in_table_var_attrs.keys() == set(columns)
+
+    # Notes
+    notes = f"{stored_attrs[which]['base_url']}/readme.txt"
 
     # Construct dtype dict (for ``read_csv``)
     dtypes: dict[str, Any] = {}
