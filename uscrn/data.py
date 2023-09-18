@@ -7,7 +7,6 @@ import datetime
 import re
 import warnings
 from collections.abc import Iterable
-from multiprocessing.pool import ThreadPool
 from typing import Literal, NamedTuple
 
 import numpy as np
@@ -19,6 +18,7 @@ from .attrs import get_col_info
 
 _HOURLY = get_col_info("hourly")
 _DAILY = get_col_info("daily")
+_MONTHLY = get_col_info("monthly")
 
 _GET_CAP: int | None = None
 
@@ -179,9 +179,52 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     return df
 
 
+def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
+    """Read a monthly CRN file.
+
+    For example:
+    https://www.ncei.noaa.gov/pub/data/uscrn/products/monthly01/CRNM0102-CO_Boulder_14_W.txt
+
+
+    Note: Unlike the other datasets, for monthly there is only one file per site.
+
+    Parameters
+    ----------
+    cat
+        Convert some columns to pandas categorical type.
+    """
+    df = pd.read_csv(
+        fp,
+        delim_whitespace=True,
+        header=None,
+        names=_MONTHLY.names,
+        dtype=_MONTHLY.dtypes,
+        parse_dates=["lst_yrmo"],
+        date_format=r"%Y%m",
+        na_values=["-99999", "-9999"],
+    )
+
+    # Set soil moisture -99 to NaN
+    sm_cols = df.columns[df.columns.str.startswith("soil_moisture_")]
+    df[sm_cols] = df[sm_cols].replace(-99, np.nan)
+
+    # Unknown datalogger version
+    df["crx_vn"] = df["crx_vn"].replace("-9.000", np.nan)
+
+    # Category cols?
+    if cat:
+        for col, cats in _MONTHLY.categorical.items():
+            df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
+
+    df.attrs.update(which="monthly")
+
+    return df
+
+
 _which_to_reader = {
     "hourly": read_hourly,
     "daily": read_daily,
+    "monthly": read_monthly,
 }
 
 
@@ -197,7 +240,7 @@ def read(fp, *, cat: bool = False) -> pd.DataFrame:
 
 def get_data(
     years: int | Iterable[int] | None = None,
-    which: Literal["hourly", "daily"] = "daily",
+    which: Literal["hourly", "daily", "monthly"] = "daily",
     *,
     n_jobs: int | None = -2,
     cat: bool = False,
@@ -231,45 +274,57 @@ def get_data(
 
     validate_which(which)
 
+    if which == "monthly" and years is not None:
+        warnings.warn("`years` ignored for monthly data.")
+
     attrs = load_attrs()
 
     base_url = attrs[which]["base_url"]
 
     # Get available years from the main page
     # e.g. `>2000/<`
+    print("Discovering files...")
     r = requests.get(f"{base_url}/")
     r.raise_for_status()
-    available_years: list[int] = [int(s) for s in re.findall(r">([0-9]{4})/?<", r.text)]
-
-    years_: list[int]
-    if isinstance(years, int):
-        years_ = [years]
-    elif years is None:
-        years_ = available_years[:]
-    else:
-        years_ = list(years)
-
-    # Discover files
-    print("Discovering files...")
-
-    def get_year_urls(year):
-        if year not in available_years:
-            raise ValueError(f"year {year} not in detected available CRN years {available_years}")
-
-        # Get filenames from the year page
-        # e.g. `>CRND0103-2020-TX_Palestine_6_WNW.txt<`
-        url = f"{base_url}/{year}/"
-        r = requests.get(url)
-        r.raise_for_status()
+    urls: list[str]
+    if which == "monthly":
+        # No year subdirectories
         fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
-        if not fns:
-            warnings.warn(f"no CRN files found for year {year} (url {url})", stacklevel=2)
+        urls = [f"{base_url}/{fn}" for fn in fns]
+    else:
+        # Year subdirectories
+        from multiprocessing.pool import ThreadPool
 
-        return (f"{base_url}/{year}/{fn}" for fn in fns)
+        available_years: list[int] = [int(s) for s in re.findall(r">([0-9]{4})/?<", r.text)]
 
-    pool = ThreadPool(processes=min(len(years_), 10))
-    urls = list(chain.from_iterable(pool.imap(get_year_urls, years_)))
-    pool.close()
+        years_: list[int]
+        if isinstance(years, int):
+            years_ = [years]
+        elif years is None:
+            years_ = available_years[:]
+        else:
+            years_ = list(years)
+
+        def get_year_urls(year):
+            if year not in available_years:
+                raise ValueError(
+                    f"year {year} not in detected available CRN years {available_years}"
+                )
+
+            # Get filenames from the year page
+            # e.g. `>CRND0103-2020-TX_Palestine_6_WNW.txt<`
+            url = f"{base_url}/{year}/"
+            r = requests.get(url)
+            r.raise_for_status()
+            fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
+            if not fns:
+                warnings.warn(f"no CRN files found for year {year} (url {url})", stacklevel=2)
+
+            return (f"{base_url}/{year}/{fn}" for fn in fns)
+
+        pool = ThreadPool(processes=min(len(years_), 10))
+        urls = list(chain.from_iterable(pool.imap(get_year_urls, years_)))
+        pool.close()
 
     print(f"{len(urls)} files found")
     print(urls[0])
@@ -303,7 +358,7 @@ def get_data(
     if dropna:
         df = df.dropna(subset=data_cols, how="all").reset_index(drop=True)
         if df.empty:
-            warnings.warn("CRN dataframe empty after dropping missing data rows", stacklevel=2)
+            warnings.warn("CRN dataframe empty after dropping missing data rows")
 
     # Category cols?
     if cat:
@@ -318,7 +373,10 @@ def get_data(
     return df
 
 
-def to_xarray(df: pd.DataFrame, which: Literal["hourly", "daily"] | None = None) -> xr.Dataset:
+def to_xarray(
+    df: pd.DataFrame,
+    which: Literal["hourly", "daily", "monthly"] | None = None,
+) -> xr.Dataset:
     """Convert to an xarray dataset.
 
     Parameters
@@ -353,26 +411,27 @@ def to_xarray(df: pd.DataFrame, which: Literal["hourly", "daily"] | None = None)
         .rename({time_var: "time"})
     )
     # Combine vertically resolved variables
-    for pref in ["soil_moisture_", "soil_temp_"]:
-        vns = list(df.columns[df.columns.str.startswith(pref)])
-        depths = sorted(float(vn.split("_")[2]) for vn in vns)
-        vn_new_parts = vns[0].split("_")
-        del vn_new_parts[2]
-        vn_new = "_".join(vn_new_parts)
+    if which in {"hourly", "daily"}:
+        for pref in ["soil_moisture_", "soil_temp_"]:
+            vns = list(df.columns[df.columns.str.startswith(pref)])
+            depths = sorted(float(vn.split("_")[2]) for vn in vns)
+            vn_new_parts = vns[0].split("_")
+            del vn_new_parts[2]
+            vn_new = "_".join(vn_new_parts)
 
-        if "depth" not in ds:
-            ds["depth"] = (
-                "depth",
-                depths,
-                {"long_name": "depth below surface", "units": "cm"},
-            )
+            if "depth" not in ds:
+                ds["depth"] = (
+                    "depth",
+                    depths,
+                    {"long_name": "depth below surface", "units": "cm"},
+                )
 
-        # Ensure sorted correctly
-        vns.sort(key=lambda vn: int(vn.split("_")[2]))
+            # Ensure sorted correctly
+            vns.sort(key=lambda vn: int(vn.split("_")[2]))
 
-        # New var
-        ds[vn_new] = xr.concat([ds[vn] for vn in vns], dim="depth")
-        ds = ds.drop_vars(vns)
+            # New var
+            ds[vn_new] = xr.concat([ds[vn] for vn in vns], dim="depth")
+            ds = ds.drop_vars(vns)
 
     # float32
     for vn in ds.data_vars:  # leave coords
