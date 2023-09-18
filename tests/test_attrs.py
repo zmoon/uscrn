@@ -63,6 +63,7 @@ def test_load_attrs():
         d = attrs[which]
         assert set(d) == {"base_url", "time_var", "columns", "notes"}
         assert d["time_var"] in d["columns"]
+        assert not d["base_url"].endswith("/")
 
 
 def test_load_col_info():

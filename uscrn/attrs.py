@@ -241,3 +241,44 @@ def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _Dse
     return _DsetVarInfo(
         names=columns, dtypes=dtypes, attrs=attrs, notes=notes, categorical=categorical
     )
+
+
+def _get_docs(which: Literal["hourly", "daily", "monthly"] = "daily") -> tuple[str, str]:
+    """Get the header and readme docs as strings."""
+    import pandas as pd
+    import requests
+
+    validate_which(which)
+
+    stored_attrs = load_attrs()
+    base_url = stored_attrs[which]["base_url"]
+
+    def get(url: str, fp: Path) -> str:
+        needs_update: bool
+        if fp.is_file():
+            r = requests.head(url)
+            r.raise_for_status()
+            last_modified_url = pd.Timestamp(r.headers["Last-Modified"])
+            last_modified_local = pd.Timestamp(fp.stat().st_mtime, unit="s", tz="UTC")
+            needs_update = last_modified_url > last_modified_local
+        else:
+            needs_update = True
+
+        if needs_update:
+            r = requests.get(url)
+            r.raise_for_status()
+            with open(fp, "w") as f:
+                f.write(r.text)
+
+        with open(fp) as f:
+            text = f.read()
+
+        return text
+
+    cache_dir = HERE / "cache"
+    cache_dir.mkdir(exist_ok=True)
+
+    headers_txt = (get(f"{base_url}/headers.txt", cache_dir / f"{which}_headers.txt"),)
+    readme_txt = (get(f"{base_url}/readme.txt", cache_dir / f"{which}_readme.txt"),)
+
+    return headers_txt, readme_txt
