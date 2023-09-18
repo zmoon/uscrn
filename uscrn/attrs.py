@@ -206,6 +206,10 @@ def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _Dse
     columns[0] = "WBAN"
 
     if which == "monthly":
+        # Consistent CRX version number var name
+        assert columns[2] == "CRX_VN_MONTHLY"
+        columns[2] = "CRX_VN"
+
         # Consistent lat/lon names
         assert columns[3] == "PRECISE_LONGITUDE"
         assert columns[4] == "PRECISE_LATITUDE"

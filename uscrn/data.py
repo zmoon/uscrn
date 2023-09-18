@@ -19,6 +19,7 @@ from .attrs import get_col_info
 
 _HOURLY = get_col_info("hourly")
 _DAILY = get_col_info("daily")
+_MONTHLY = get_col_info("monthly")
 
 _GET_CAP: int | None = None
 
@@ -179,9 +180,52 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     return df
 
 
+def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
+    """Read a monthly CRN file.
+
+    For example:
+    https://www.ncei.noaa.gov/pub/data/uscrn/products/monthly01/CRNM0102-CO_Boulder_14_W.txt
+
+
+    Note: Unlike the other datasets, for monthly there is only one file per site.
+
+    Parameters
+    ----------
+    cat
+        Convert some columns to pandas categorical type.
+    """
+    df = pd.read_csv(
+        fp,
+        delim_whitespace=True,
+        header=None,
+        names=_MONTHLY.names,
+        dtype=_MONTHLY.dtypes,
+        parse_dates=["lst_yrmo"],
+        date_format=r"%Y%m",
+        na_values=["-99999", "-9999"],
+    )
+
+    # Set soil moisture -99 to NaN
+    sm_cols = df.columns[df.columns.str.startswith("soil_moisture_")]
+    df[sm_cols] = df[sm_cols].replace(-99, np.nan)
+
+    # Unknown datalogger version
+    df["crx_vn"] = df["crx_vn"].replace("-9.000", np.nan)
+
+    # Category cols?
+    if cat:
+        for col, cats in _MONTHLY.categorical.items():
+            df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
+
+    df.attrs.update(which="monthly")
+
+    return df
+
+
 _which_to_reader = {
     "hourly": read_hourly,
     "daily": read_daily,
+    "monthly": read_monthly,
 }
 
 

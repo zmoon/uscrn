@@ -429,7 +429,7 @@ monthly:
       description: The Local Standard Time (LST) year/month of the observation.
       dtype: ignore
 
-    - name: crx_vn_monthly
+    - name: crx_vn
       long_name: station datalogger version number
       units: null
       description: >-
