@@ -4,14 +4,12 @@ Load CRN data from NCEI.
 from __future__ import annotations
 
 import datetime
-import re
 import warnings
 from collections.abc import Iterable
 from typing import Literal, NamedTuple
 
 import numpy as np
 import pandas as pd
-import requests
 import xarray as xr
 
 _GET_CAP: int | None = None
@@ -270,8 +268,10 @@ def get_data(
     dropna
         Drop rows where all data cols are missing data.
     """
+    import re
     from itertools import chain
 
+    import requests
     from joblib import Parallel, delayed
 
     from .attrs import load_attrs, validate_which
