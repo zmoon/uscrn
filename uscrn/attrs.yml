@@ -412,7 +412,7 @@ daily:
       June 1, 2014. The historical data for these stations remain
       available.
 
-_monthly:
+monthly:
   base_url: https://www.ncei.noaa.gov/pub/data/uscrn/products/monthly01
   time_var: lst_yrmo
   columns:
@@ -438,7 +438,7 @@ _monthly:
         Note: This field should be treated as text (i.e. string).
       dtype: string
 
-    - name: "precise_{longitude,latitude}"
+    - name: "{longitude,latitude}"
       long_name: station {longitude,latitude}
       units: "{degree_east,degree_north}"
       description: Station {longitude,latitude}, using WGS-84, with a precision of 4 decimal places.
@@ -460,7 +460,7 @@ _monthly:
       units: mm
       description: Total amount of precipitation, in mm. See Note G.
 
-    - name: solarad_monthly_avg
+    - name: solrad_monthly_avg
       long_name: monthly average daily total solar radiation
       units: MJ m-2
       description: >-
@@ -484,3 +484,5 @@ _monthly:
       description: >-
         {Maximum,Minimum,Average} infrared surface temperature, in degrees C.
         See note J.
+
+  notes:

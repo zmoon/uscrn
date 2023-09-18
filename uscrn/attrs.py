@@ -81,7 +81,7 @@ def expand_strs(d: Mapping[str, str | None]) -> list[dict[str, str | None]]:
     return d_news
 
 
-WHICHS: Final = ("hourly", "daily")
+WHICHS: Final = ("hourly", "daily", "monthly")
 """Identifiers for the datasets that have been implemented."""
 
 _ALL_WHICHS: Final = ("subhourly", "hourly", "daily", "monthly")
@@ -177,7 +177,7 @@ def _map_dtype(dtype: str) -> type | None:
     return _DTYPE_MAP[dtype]
 
 
-def get_col_info(which: Literal["hourly", "daily"] = "daily") -> _DsetVarInfo:
+def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _DsetVarInfo:
     """Read the column info file (the individual data files don't have headers)
     and stored attribute data, preparing info for use in ``read_csv``.
 
@@ -204,6 +204,13 @@ def get_col_info(which: Literal["hourly", "daily"] = "daily") -> _DsetVarInfo:
     # For consistency with meta, we use 'wban' instead of 'wbanno'
     assert columns[0] == "WBANNO"
     columns[0] = "WBAN"
+
+    if which == "monthly":
+        # Consistent lat/lon names
+        assert columns[3] == "PRECISE_LONGITUDE"
+        assert columns[4] == "PRECISE_LATITUDE"
+        columns[3] = "LONGITUDE"
+        columns[4] = "LATITUDE"
 
     # Lowercase is better
     columns = [c.lower() for c in columns]
