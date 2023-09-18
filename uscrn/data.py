@@ -275,7 +275,7 @@ def get_data(
     validate_which(which)
 
     if which == "monthly" and years is not None:
-        warnings.warn("`years` ignored for monthly data.", stacklevel=1)
+        warnings.warn("`years` ignored for monthly data.")
 
     attrs = load_attrs()
 
@@ -286,14 +286,15 @@ def get_data(
     print("Discovering files...")
     r = requests.get(f"{base_url}/")
     r.raise_for_status()
+    urls: list[str]
     if which == "monthly":
         # No year subdirectories
         fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
         urls = [f"{base_url}/{fn}" for fn in fns]
     else:
+        # Year subdirectories
         from multiprocessing.pool import ThreadPool
 
-        # Year subdirectories
         available_years: list[int] = [int(s) for s in re.findall(r">([0-9]{4})/?<", r.text)]
 
         years_: list[int]
@@ -357,7 +358,7 @@ def get_data(
     if dropna:
         df = df.dropna(subset=data_cols, how="all").reset_index(drop=True)
         if df.empty:
-            warnings.warn("CRN dataframe empty after dropping missing data rows", stacklevel=1)
+            warnings.warn("CRN dataframe empty after dropping missing data rows")
 
     # Category cols?
     if cat:
