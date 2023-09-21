@@ -152,6 +152,8 @@ subhourly:
         1 denotes field-length overflow,
         and 3 denotes erroneous data.
         See Note I.
+      dtype: string
+      categories: ["0", "1", "3"]
 
     - name: wind_1_5
       long_name: 5-min average wind speed at 1.5 m
@@ -166,6 +168,8 @@ subhourly:
         1 denotes field-length overflow,
         and 3 denotes erroneous data.
         See Note I.
+      dtype: string
+      categories: ["0", "1", "3"]
 
 hourly:
   base_url: https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02
