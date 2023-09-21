@@ -105,7 +105,15 @@ def validate_which(which: str) -> None:
 
 @lru_cache(1)
 def load_attrs() -> dict[str, dict[str, Any]]:
-    """Load information derived from the attrs YAML file.
+    """Load information from the attrs YAML file.
+
+    * expanding templating using :func:`expand_strs`
+    * filling in defaults for fields that haven't been specified in individual entries
+
+    The variable metadata are based on the individual dataset ``readme.txt`` files,
+    but may differ slightly, e.g.
+
+    * trying to follow CF conventions for units
 
     This is cached for the lifetime of the process.
     """
@@ -183,13 +191,16 @@ def _map_dtype(dtype: str) -> type | None:
 
 @lru_cache(len(WHICHS))
 def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _DsetVarInfo:
-    """Read the column info file (the individual data files don't have headers)
-    and stored attribute data, preparing info for use in ``read_csv``.
+    """Column (variable) info (the individual data files don't have headers),
+    intended for use in ``read_csv``.
+
+    Derived based on:
+
+    * stored attribute data (based on the individal dataset ``readme.txt`` files)
+    * the dataset ``headers.txt`` file (to ensure correct column name order)
+    * the dataset ``readme.txt`` file (for the notes)
 
     This is cached for the lifetime of the process.
-
-    For example:
-    https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
     """
     from textwrap import dedent
 
@@ -253,12 +264,24 @@ def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _Dse
     categorical = {k: v["categories"] for k, v in attrs.items() if v["categories"] is not False}
 
     return _DsetVarInfo(
-        names=columns, dtypes=dtypes, attrs=attrs, notes=notes, categorical=categorical
+        names=columns,
+        dtypes=dtypes,
+        attrs=attrs,
+        notes=notes,
+        categorical=categorical,
     )
 
 
 def _get_docs(which: Literal["hourly", "daily", "monthly"] = "daily") -> tuple[str, str]:
-    """Get the header and readme docs as strings."""
+    """Get the header and readme docs as strings.
+
+    The files are downloaded if they:
+
+    * are not already present in the cache location
+    * are present but their timestamp is older than the remote version
+
+    Otherwise, the cached file is used (read).
+    """
     import pandas as pd
     import requests
 
