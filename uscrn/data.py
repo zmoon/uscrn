@@ -4,34 +4,27 @@ Load CRN data from NCEI.
 from __future__ import annotations
 
 import datetime
-import re
 import warnings
 from collections.abc import Iterable
 from typing import Literal, NamedTuple
 
 import numpy as np
 import pandas as pd
-import requests
 import xarray as xr
 
-from .attrs import get_col_info
-
-_HOURLY = get_col_info("hourly")
-_DAILY = get_col_info("daily")
-_MONTHLY = get_col_info("monthly")
-
 _GET_CAP: int | None = None
+"""Restrict how many files to load, for testing purposes."""
 
 
 def load_meta(*, cat: bool = False) -> pd.DataFrame:
     """Load the station metadata table.
 
+    https://www.ncei.noaa.gov/pub/data/uscrn/products/stations.tsv
+
     Parameters
     ----------
     cat
         Convert some columns to pandas categorical type.
-
-    https://www.ncei.noaa.gov/pub/data/uscrn/products/stations.tsv
     """
     url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/stations.tsv"
 
@@ -111,12 +104,15 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
     cat
         Convert some columns to pandas categorical type.
     """
+    from .attrs import get_col_info
+
+    col_info = get_col_info("hourly")
     df = pd.read_csv(
         fp,
         delim_whitespace=True,
         header=None,
-        names=_HOURLY.names,
-        dtype=_HOURLY.dtypes,
+        names=col_info.names,
+        dtype=col_info.dtypes,
         parse_dates={"utc_time_": ["utc_date", "utc_time"], "lst_time_": ["lst_date", "lst_time"]},
         date_format=r"%Y%m%d %H%M",
         na_values=["-99999", "-9999"],
@@ -132,7 +128,7 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
 
     # Category cols?
     if cat:
-        for col, cats in _HOURLY.categorical.items():
+        for col, cats in col_info.categorical.items():
             df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
     df.attrs.update(which="hourly")
@@ -151,12 +147,15 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     cat
         Convert some columns to pandas categorical type.
     """
+    from .attrs import get_col_info
+
+    col_info = get_col_info("daily")
     df = pd.read_csv(
         fp,
         delim_whitespace=True,
         header=None,
-        names=_DAILY.names,
-        dtype=_DAILY.dtypes,
+        names=col_info.names,
+        dtype=col_info.dtypes,
         parse_dates=["lst_date"],
         date_format=r"%Y%m%d",
         na_values=["-99999", "-9999"],
@@ -171,7 +170,7 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
 
     # Category cols?
     if cat:
-        for col, cats in _DAILY.categorical.items():
+        for col, cats in col_info.categorical.items():
             df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
     df.attrs.update(which="daily")
@@ -193,12 +192,15 @@ def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
     cat
         Convert some columns to pandas categorical type.
     """
+    from .attrs import get_col_info
+
+    col_info = get_col_info("monthly")
     df = pd.read_csv(
         fp,
         delim_whitespace=True,
         header=None,
-        names=_MONTHLY.names,
-        dtype=_MONTHLY.dtypes,
+        names=col_info.names,
+        dtype=col_info.dtypes,
         parse_dates=["lst_yrmo"],
         date_format=r"%Y%m",
         na_values=["-99999", "-9999"],
@@ -213,7 +215,7 @@ def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
 
     # Category cols?
     if cat:
-        for col, cats in _MONTHLY.categorical.items():
+        for col, cats in col_info.categorical.items():
             df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
     df.attrs.update(which="monthly")
@@ -266,20 +268,23 @@ def get_data(
     dropna
         Drop rows where all data cols are missing data.
     """
+    import re
     from itertools import chain
 
+    import requests
     from joblib import Parallel, delayed
 
-    from .attrs import load_attrs, validate_which
+    from .attrs import get_col_info, load_attrs, validate_which
 
     validate_which(which)
 
     if which == "monthly" and years is not None:
         warnings.warn("`years` ignored for monthly data.")
 
-    attrs = load_attrs()
+    stored_attrs = load_attrs()
+    col_info = get_col_info(which)
 
-    base_url = attrs[which]["base_url"]
+    base_url = stored_attrs[which]["base_url"]
 
     # Get available years from the main page
     # e.g. `>2000/<`
@@ -304,6 +309,8 @@ def get_data(
             years_ = available_years[:]
         else:
             years_ = list(years)
+            if len(years_) == 0:
+                raise ValueError("years should be not be empty")
 
         def get_year_urls(year):
             if year not in available_years:
@@ -362,13 +369,27 @@ def get_data(
 
     # Category cols?
     if cat:
-        for col in df.columns:
-            cats = attrs[which]["columns"][col]["categories"]
-            if cats is not False:
-                df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
+        for col, cats in col_info.categorical.items():
+            df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
     now = datetime.datetime.now(datetime.timezone.utc)
-    df.attrs.update(which=which, created=now, source=base_url)
+    title = f"U.S. Climate Reference Network (USCRN) | {which}"
+    if which == "monthly":
+        unique_years = sorted(df[stored_attrs[which]["time_var"]].dt.year.unique())
+        title += f" | {unique_years[0]}--{unique_years[-1]}"
+    else:
+        if len(years_) == 1:
+            title += f" | {years_[0]}"
+        else:
+            title += f" | {years_[0]}--{years_[-1]}"
+    df.attrs.update(
+        which=which,
+        title=title,
+        created=str(now),
+        source=base_url,
+        attrs=col_info.attrs,  # NOTE: nested, may not survive storage roundtrip
+        notes=col_info.notes,
+    )
 
     return df
 
@@ -386,7 +407,7 @@ def to_xarray(
     which
         Which dataset. Will attempt to guess by default. Specify to override this.
     """
-    from .attrs import load_attrs, validate_which
+    from .attrs import get_col_info, load_attrs, validate_which
 
     if which is None:
         if "which" not in df.attrs:
@@ -398,10 +419,13 @@ def to_xarray(
 
     validate_which(which)
 
-    info = load_attrs()
-    var_attrs = info[which]["columns"]
-    base_url = info[which]["base_url"]
-    time_var = info[which]["time_var"]
+    stored_attrs = load_attrs()
+    var_attrs = stored_attrs[which]["columns"]
+    base_url = stored_attrs[which]["base_url"]
+    time_var = stored_attrs[which]["time_var"]
+
+    col_info = get_col_info(which)
+    notes = col_info.notes
 
     ds = (
         df.set_index(["wban", time_var])
@@ -490,5 +514,6 @@ def to_xarray(
     ds.attrs["title"] = f"U.S. Climate Reference Network (USCRN) | {which} | {s_years}"
     ds.attrs["created"] = str(now)
     ds.attrs["source"] = base_url
+    ds.attrs["notes"] = notes
 
     return ds

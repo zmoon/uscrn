@@ -105,6 +105,18 @@ def validate_which(which: str) -> None:
 
 @lru_cache(1)
 def load_attrs() -> dict[str, dict[str, Any]]:
+    """Load information from the attrs YAML file.
+
+    * expanding templating using :func:`expand_strs`
+    * filling in defaults for fields that haven't been specified in individual entries
+
+    The variable metadata are based on the individual dataset ``readme.txt`` files,
+    but may differ slightly, e.g.
+
+    * trying to follow CF conventions for units
+
+    This is cached for the lifetime of the process.
+    """
     import itertools
 
     import yaml
@@ -147,7 +159,7 @@ def load_attrs() -> dict[str, dict[str, Any]]:
 
 class _DsetVarInfo(NamedTuple):
     names: list[str]
-    """Column (variable) names."""
+    """Column (variable) names, in the correct order."""
 
     dtypes: dict[str, Any]  # TODO: better typing
     """Maps column names to dtypes, for use in pandas ``read_csv``."""
@@ -155,7 +167,7 @@ class _DsetVarInfo(NamedTuple):
     attrs: dict[str, dict[str, str | None]]
     """Maps column names to attribute dicts with, e.g., ``long_name`` and ``units``."""
 
-    notes: dict[str, str]
+    notes: str
     """Labeled notes associated with the dataset, mentioned in the readme."""
 
     categorical: dict[str, list[Any]]
@@ -177,27 +189,31 @@ def _map_dtype(dtype: str) -> type | None:
     return _DTYPE_MAP[dtype]
 
 
+@lru_cache(len(WHICHS))
 def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _DsetVarInfo:
-    """Read the column info file (the individual data files don't have headers)
-    and stored attribute data, preparing info for use in ``read_csv``.
+    """Column (variable) info (the individual data files don't have headers),
+    intended for use in ``read_csv``.
 
-    For example:
-    https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/headers.txt
+    Derived based on:
+
+    * stored attribute data (based on the individal dataset ``readme.txt`` files)
+    * the dataset ``headers.txt`` file (to ensure correct column name order)
+    * the dataset ``readme.txt`` file (for the notes)
+
+    This is cached for the lifetime of the process.
     """
-    import requests
+    from textwrap import dedent
 
     validate_which(which)
 
     stored_attrs = load_attrs()
-    url = f"{stored_attrs[which]['base_url']}/headers.txt"
+    headers_txt, readme_txt = _get_docs(which)
 
     # "This file contains the following three lines: Field Number, Field Name and Unit of Measure."
-    r = requests.get(url)
-    r.raise_for_status()
-    lines = r.text.splitlines()
-    assert len(lines) == 3
-    nums = lines[0].split()
-    columns = lines[1].split()
+    readme_lines = headers_txt.splitlines()
+    assert len(readme_lines) == 3
+    nums = readme_lines[0].split()
+    columns = readme_lines[1].split()
     assert len(nums) == len(columns)
     assert nums == [str(i + 1) for i in range(len(columns))]
 
@@ -222,9 +238,20 @@ def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _Dse
     # Check consistency with attrs YAML file
     assert len(columns) == len(set(columns)), "Column names should be unique"
     attrs = stored_attrs[which]["columns"]
-    notes = stored_attrs[which]["notes"]
     in_table_var_attrs = {k: v for k, v in attrs.items() if v["xarray_only"] is False}
     assert in_table_var_attrs.keys() == set(columns)
+
+    # Notes
+    readme_url = f"{stored_attrs[which]['base_url']}/readme.txt"
+    readme_lines = readme_txt.splitlines()
+    notes = f"Notes from {readme_url}:\n"
+    for i, line in enumerate(readme_lines):
+        line_ = line.strip()
+        if line_.startswith("IMPORTANT NOTES:"):
+            notes += dedent("\n".join(readme_lines[i + 1 :]))
+            break
+    else:
+        raise AssertionError("Expected readme line starting with 'IMPORTANT NOTES:'")
 
     # Construct dtype dict (for ``read_csv``)
     dtypes: dict[str, Any] = {}
@@ -237,5 +264,58 @@ def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _Dse
     categorical = {k: v["categories"] for k, v in attrs.items() if v["categories"] is not False}
 
     return _DsetVarInfo(
-        names=columns, dtypes=dtypes, attrs=attrs, notes=notes, categorical=categorical
+        names=columns,
+        dtypes=dtypes,
+        attrs=attrs,
+        notes=notes,
+        categorical=categorical,
     )
+
+
+def _get_docs(which: Literal["hourly", "daily", "monthly"] = "daily") -> tuple[str, str]:
+    """Get the header and readme docs as strings.
+
+    The files are downloaded if they:
+
+    * are not already present in the cache location
+    * are present but their timestamp is older than the remote version
+
+    Otherwise, the cached file is used (read).
+    """
+    import pandas as pd
+    import requests
+
+    validate_which(which)
+
+    stored_attrs = load_attrs()
+    base_url = stored_attrs[which]["base_url"]
+
+    def get(url: str, fp: Path) -> str:
+        needs_update: bool
+        if fp.is_file():
+            r = requests.head(url)
+            r.raise_for_status()
+            last_modified_url = pd.Timestamp(r.headers["Last-Modified"])
+            last_modified_local = pd.Timestamp(fp.stat().st_mtime, unit="s", tz="UTC")
+            needs_update = last_modified_url > last_modified_local
+        else:
+            needs_update = True
+
+        if needs_update:
+            r = requests.get(url)
+            r.raise_for_status()
+            with open(fp, "w") as f:
+                f.write(r.text)
+
+        with open(fp) as f:
+            text = f.read()
+
+        return text
+
+    cache_dir = HERE / "cache"
+    cache_dir.mkdir(exist_ok=True)
+
+    headers_txt = get(f"{base_url}/headers.txt", cache_dir / f"{which}_headers.txt")
+    readme_txt = get(f"{base_url}/readme.txt", cache_dir / f"{which}_readme.txt")
+
+    return headers_txt, readme_txt

@@ -2,7 +2,6 @@ hourly:
   base_url: https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02
   time_var: utc_time
   columns:
-    # https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/readme.txt
     - name: wban
       long_name: WBAN number
       units: null
@@ -177,77 +176,10 @@ hourly:
         See Note K.
       xarray_only: true
 
-  notes:
-    A: All fields are separated from adjacent fields by at least one space.
-    B: Leading zeros are omitted.
-    C: >-
-      Missing data are indicated by the lowest possible integer for a
-      given column format, such as -9999.0 for 7-character fields with
-      one decimal place or -99.000 for 7-character fields with three
-      decimal places.
-    D: >-
-      Hourly data are calculated over the 60-minute period *ending*
-      at the time shown.
-    E: >-
-      Calculated fields, such as T_CALC and P_CALC, do not have quality
-      flags associated with them because these are derived quantities
-      from raw data. When the raw data used in the calculation are
-      flagged as erroneous, the derived values are not calculated, and
-      are instead reported as missing. Therefore, these fields may be
-      assumed to always be good (unflagged) data, except when they are
-      reported as missing.
-    F: >-
-      The hourly values reported in this dataset are calculated using
-      multiple independent measurements for temperature and precipitation.
-      USCRN/USRCRN stations have multiple co-located temperature sensors
-      that make 10-second independent measurements which are used to
-      produce max/min/avg temperature values at 5-minute intervals. The
-      precipitation gauge is equipped with multiple load cell sensors to
-      provide independent measurements of depth change at 5-minute
-      intervals.
-    G: >-
-      Quality control flags indicate the following: 0 denotes good data
-      and 3 denotes erroneous data.
-    H: >-
-      On 2013-01-07 at 1500 UTC, USCRN began reporting corrected surface
-      temperature measurements for some stations. These changes
-      impact previous users of the data because the corrected values
-      differ from uncorrected values. To distinguish between uncorrected
-      (raw) and corrected surface temperature measurements, a surface
-      temperature type field was added to the data product. The
-      possible values of the this field are "R" to denote raw surface
-      temperature measurements, "C" to denote corrected surface
-      temperature measurements, and "U" for unknown/missing.
-    I: >-
-      Hourly relative humidity is computed from 5-minute averages in
-      almost all cases, however the two Asheville, NC stations reported
-      only hourly RH values until 2007-02-22.
-    J: >-
-      USRCRN stations do not measure solar radiation, surface temperature,
-      relative humidity or soil variables, so those fields are shown as
-      missing data.
-    K: >-
-      USCRN stations have multiple co-located soil sensors that record
-      independent measurements at 5-minute intervals. The hourly soil
-      values reported in this dataset are calculated from these multiple
-      independent measurements. Average soil moisture (volumetric water
-      content) is the ratio of water volume over sample volume
-      (m^3 water/m^3 soil).
-    L: >-
-      In accordance with Service Change Notice 14-25 from the National
-      Weather Service, NCDC stopped providing data from the 72
-      Southwest Regional Climate Reference Network (USRCRN) stations on
-      June 1, 2014. The historical data for these stations remain
-      available.
-    M: >-
-      This product supersedes the hourly01 files. It contains all of the
-      variables from the earlier product, plus additional ones.
-
 daily:
   base_url: https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01
   time_var: lst_date
   columns:
-    # https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/readme.txt
     - name: wban
       long_name: WBAN number
       units: null
@@ -355,68 +287,10 @@ daily:
         See Notes I and J.
       xarray_only: true
 
-  notes:
-    A: All fields are separated from adjacent fields by at least one space.
-    B: Leading zeros are omitted.
-    C: >-
-      Missing data are indicated by the lowest possible integer for a
-      given column format, such as -9999.0 for 7-character fields with
-      one decimal place or -99.000 for 7-character fields with three
-      decimal places.
-    D: Daily data are calculated using the station's local day.
-    E: >-
-      There are no quality flags for these derived quantities. When the
-      raw data are flagged as erroneous, these derived values are not
-      calculated, and are instead reported as missing. Therefore, these
-      fields may be assumed to always be good (unflagged) data, except
-      when they are reported as missing.
-    F: >-
-      The daily values reported in this dataset are calculated using
-      multiple independent measurements for temperature and precipitation.
-      USCRN/USRCRN stations have multiple co-located temperature sensors
-      that make 10-second independent measurements which are used to
-      produce max/min/avg temperature values at 5-minute intervals. The
-      precipitation gauge is equipped with multiple load cell sensors to
-      provide independent measurements of depth change at 5-minute
-      intervals.
-    G: >-
-      On 2013-01-07 at 1500 UTC, USCRN began reporting corrected surface
-      temperature measurements for some stations. These changes
-      impact previous users of the data because the corrected values
-      differ from uncorrected values. To distinguish between uncorrected
-      (raw) and corrected surface temperature measurements, a surface
-      temperature type field was added to the daily01 product. The
-      possible values of the this field are "R" to denote raw surface
-      temperature measurements, "C" to denote corrected surface
-      temperature measurements, and "U" for unknown/missing.
-    H: >-
-      Relative humidity is computed from 5-minute values in almost all
-      cases. All USCRN stations now report 5-minute averages, however the
-      two Asheville, NC stations reported only hourly RH values until
-      2007-02-22.
-    I: >-
-      USRCRN stations do not measure solar radiation, surface temperature,
-      relative humidity or soil variables, so those fields are shown as
-      missing data.
-    J: >-
-      USCRN stations have multiple co-located soil sensors that record
-      independent measurements. The soil values reported in this dataset
-      are an average of the day's hourly soil measurements which are
-      calculated from the multiple independent measurements. Soil
-      moisture is the ratio of water volume over sample volume
-      (m^3 water/m^3 soil).
-    K: >-
-      In accordance with Service Change Notice 14-25 from the National
-      Weather Service, NCDC stopped providing data from the 72
-      Southwest Regional Climate Reference Network (USRCRN) stations on
-      June 1, 2014. The historical data for these stations remain
-      available.
-
 monthly:
   base_url: https://www.ncei.noaa.gov/pub/data/uscrn/products/monthly01
   time_var: lst_yrmo
   columns:
-    # https://www.ncei.noaa.gov/pub/data/uscrn/products/monthly01/readme.txt
     - name: wban
       long_name: WBAN number
       units: null
@@ -484,5 +358,3 @@ monthly:
       description: >-
         {Maximum,Minimum,Average} infrared surface temperature, in degrees C.
         See note J.
-
-  notes:
