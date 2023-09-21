@@ -198,7 +198,7 @@ def get_col_info(
 
     Derived based on:
 
-    * stored attribute data (based on the individal dataset ``readme.txt`` files)
+    * stored attribute data (based on the individual datasets' ``readme.txt`` files)
     * the dataset ``headers.txt`` file (to ensure correct column name order)
     * the dataset ``readme.txt`` file (for the notes)
 
