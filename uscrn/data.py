@@ -375,7 +375,8 @@ def get_data(
     now = datetime.datetime.now(datetime.timezone.utc)
     title = f"U.S. Climate Reference Network (USCRN) | {which}"
     if which == "monthly":
-        pass  # always all years
+        unique_years = sorted(df[stored_attrs[which]["time_var"]].dt.year.unique())
+        title += f" | {unique_years[0]}--{unique_years[-1]}"
     else:
         if len(years_) == 1:
             title += f" | {years_[0]}"
