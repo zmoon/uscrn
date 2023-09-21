@@ -10,15 +10,23 @@ Example:
 ```python
 import uscrn as crn
 
-df = crn.get_data(2019, "hourly", n_jobs=6)
+df = crn.get_data(2019, "hourly", n_jobs=6)  # pandas.DataFrame
 
-ds = crn.to_xarray(df)
+ds = crn.to_xarray(df)  # xarray.Dataset
+```
+
+Both `df` (pandas) and `ds` (xarray) include dataset and variable metadata.
+For `df`, these are in `df.attrs` and can be preserved by
+writing to Parquet with the PyArrow engine with pandas v2.1+.
+
+```python
+df.to_parquet("crn_2019_hourly.parquet", engine="pyarrow")
 ```
 
 Mamba install example:
 
 ```sh
-mamba create -n crn -c conda-forge python=3.10 joblib numpy pandas pyyaml requests xarray fastparquet netcdf4
+mamba create -n crn -c conda-forge python=3.10 joblib numpy pandas pyyaml requests xarray pyarrow netcdf4
 mamba activate crn
 pip install --no-deps uscrn
 ```

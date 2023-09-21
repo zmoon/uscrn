@@ -298,6 +298,12 @@ def get_data(
     * Info: https://www.ncei.noaa.gov/access/crn/qcdatasets.html
     * Data: https://www.ncei.noaa.gov/pub/data/uscrn/products/
 
+    Variable and dataset metadata are included in the ``.attrs`` dict.
+    These will be preserved if you have pandas v2.1+
+    and save the dataframe to Parquet format with the PyArrow engine.
+
+    >>> df.to_parquet('crn.parquet', engine='pyarrow')
+
     Parameters
     ----------
     years
