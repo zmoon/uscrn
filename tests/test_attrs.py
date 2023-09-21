@@ -67,6 +67,7 @@ def test_load_attrs():
 
 
 def test_load_col_info():
+    get_col_info("subhourly")
     get_col_info("daily")
     get_col_info("hourly")
     get_col_info("monthly")

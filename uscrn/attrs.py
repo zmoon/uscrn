@@ -81,7 +81,7 @@ def expand_strs(d: Mapping[str, str | None]) -> list[dict[str, str | None]]:
     return d_news
 
 
-WHICHS: Final = ("hourly", "daily", "monthly")
+WHICHS: Final = ("subhourly", "hourly", "daily", "monthly")
 """Identifiers for the datasets that have been implemented."""
 
 _ALL_WHICHS: Final = ("subhourly", "hourly", "daily", "monthly")
@@ -190,7 +190,9 @@ def _map_dtype(dtype: str) -> type | None:
 
 
 @lru_cache(len(WHICHS))
-def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _DsetVarInfo:
+def get_col_info(
+    which: Literal["subhourly", "hourly", "daily", "monthly"] = "daily"
+) -> _DsetVarInfo:
     """Column (variable) info (the individual data files don't have headers),
     intended for use in ``read_csv``.
 
