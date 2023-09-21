@@ -114,13 +114,19 @@ def test_get(which):
 
 
 @pytest.mark.xfail(Version(pd.__version__) < Version("2.1"), reason="requires pandas 2.1+")
-def test_df_attrs_roundtrip(tmp_path):
-    df = get_data(2019, which="daily", n_jobs=N)
+@pytest.mark.parametrize("engine", ["pyarrow", "fastparquet"])
+def test_df_parquet_roundtrip(tmp_path, engine):
+    df = get_data(2019, which="daily", n_jobs=N, cat=True)
+    assert df.attrs != {}
 
     fp = tmp_path / "test.parquet"
-    df.to_parquet(fp)
-    df2 = pd.read_parquet(fp, engine="pyarrow")
-    # NOTE: doesn't work with fastparquet engine currently
+    df.to_parquet(fp, index=False)
+    df2 = pd.read_parquet(fp, engine=engine)
 
+    assert df.equals(df2)
     assert df.attrs is not df2.attrs
-    assert df.attrs == df2.attrs
+
+    if engine == "fastparquet":
+        assert df2.attrs == {}
+    else:
+        assert df.attrs == df2.attrs
