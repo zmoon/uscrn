@@ -81,7 +81,7 @@ def expand_strs(d: Mapping[str, str | None]) -> list[dict[str, str | None]]:
     return d_news
 
 
-WHICHS: Final = ("hourly", "daily", "monthly")
+WHICHS: Final = ("subhourly", "hourly", "daily", "monthly")
 """Identifiers for the datasets that have been implemented."""
 
 _ALL_WHICHS: Final = ("subhourly", "hourly", "daily", "monthly")
@@ -190,13 +190,15 @@ def _map_dtype(dtype: str) -> type | None:
 
 
 @lru_cache(len(WHICHS))
-def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _DsetVarInfo:
+def get_col_info(
+    which: Literal["subhourly", "hourly", "daily", "monthly"] = "daily"
+) -> _DsetVarInfo:
     """Column (variable) info (the individual data files don't have headers),
     intended for use in ``read_csv``.
 
     Derived based on:
 
-    * stored attribute data (based on the individal dataset ``readme.txt`` files)
+    * stored attribute data (based on the individual datasets' ``readme.txt`` files)
     * the dataset ``headers.txt`` file (to ensure correct column name order)
     * the dataset ``readme.txt`` file (for the notes)
 
@@ -272,7 +274,9 @@ def get_col_info(which: Literal["hourly", "daily", "monthly"] = "daily") -> _Dse
     )
 
 
-def _get_docs(which: Literal["hourly", "daily", "monthly"] = "daily") -> tuple[str, str]:
+def _get_docs(
+    which: Literal["subhourly", "hourly", "daily", "monthly"] = "daily"
+) -> tuple[str, str]:
     """Get the header and readme docs as strings.
 
     The files are downloaded if they:

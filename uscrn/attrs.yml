@@ -1,3 +1,176 @@
+subhourly:
+  base_url: https://www.ncei.noaa.gov/pub/data/uscrn/products/subhourly01
+  time_var: utc_time
+  columns:
+    - name: wban
+      long_name: WBAN number
+      units: null
+      description: The station WBAN number.
+      dtype: string
+
+    - name: utc_date
+      long_name: UTC date
+      units: null
+      description: The UTC date of the observation.
+      dtype: ignore
+
+    - name: utc_time
+      long_name: UTC time
+      units: null
+      description: >-
+        The UTC time at the end of the 5-minute observation period.
+        For example, time 0420 designates the observational period
+        starting just after 0415 and ending at 0420;
+        and 0000 designates the last 5-minute period of the previous day.
+      dtype: ignore
+
+    - name: lst_date
+      long_name: LST date
+      units: null
+      description: The Local Standard Time (LST) date of the observation.
+      dtype: ignore
+
+    - name: lst_time
+      long_name: LST time
+      units: null
+      description: >-
+        The Local Standard Time (LST) time of the observation. Time is the
+        end of the observed hour (see UTC_TIME description).
+      dtype: ignore
+
+    - name: crx_vn
+      long_name: station datalogger version number
+      units: null
+      description: >-
+        The version number of the station datalogger program that was in effect
+        at the time of the observation.
+        Note: This field should be treated as text (i.e. string).
+      dtype: string
+
+    - name: "{longitude,latitude}"
+      long_name: station {longitude,latitude}
+      units: "{degree_east,degree_north}"
+      description: Station {longitude,latitude}, using WGS-84.
+
+    - name: air_temperature
+      long_name: 5-min average air temperature
+      units: degree_Celsius
+      description: Average air temperature, in degrees C. See Notes F and G.
+
+    - name: precipitation
+      long_name: 5-min total precipitation
+      units: mm
+      description: Total amount of precipitation, in mm. See Notes F and H.
+
+    - name: solar_radiation
+      long_name: 5-min average solar radiation
+      units: W m-2
+      description: Average global solar radiation, in W m-2.
+    - name: sr_flag
+      long_name: QC flag for 5-min average solar radiation
+      units: null
+      description: >-
+        QC flag for the average global solar radiation measurement.
+        0 denotes good data,
+        1 denotes field-length overflow,
+        and 3 denotes erroneous data.
+        See Note I.
+      dtype: string
+      categories: ["0", "1", "3"]
+
+    - name: surface_temperature
+      long_name: 5-min average infrared surface temperature
+      units: degree_Celsius
+      description: Average infrared surface temperature, in degrees C. See Note J.
+    - name: st_type
+      long_name: type of infrared surface measurement
+      units: null
+      description: >-
+        The type of infrared surface temperature measurement:
+        'R' denotes raw (uncorrected);
+        'C' denotes corrected;
+        and 'U' is shown if the type is unknown/missing.
+        See Note J.
+      dtype: string
+      categories: [R, C, U]
+    - name: st_flag
+      long_name: QC flag for 5-min average infrared surface temperature
+      units: null
+      description: >-
+        QC flag for the surface temperature measurement.
+        0 denotes good data,
+        1 denotes field-length overflow,
+        and 3 denotes erroneous data.
+        See Note I.
+      dtype: string
+      categories: ["0", "1", "3"]
+
+    - name: relative_humidity
+      long_name: 5-min average relative humidity
+      units: "%"
+      description: Relative humidity average, as a percentage. See Note K.
+    - name: rh_flag
+      long_name: QC flag for 5-min average relative humidity
+      units: null
+      description: >-
+        QC flag for the relative humidity measurement.
+        0 denotes good data,
+        1 denotes field-length overflow,
+        and 3 denotes erroneous data.
+        See Note I.
+      dtype: string
+      categories: ["0", "1", "3"]
+
+    - name: soil_moisture_5
+      long_name: 5-min average soil moisture at 5 cm depth
+      units: m3 m-3
+      description: >-
+        Average soil moisture (volumetric water content in m3 m-3)
+        at 5 cm below the surface.
+        See Note M.
+
+    - name: soil_temperature_5
+      long_name: 5-min average soil temperature at 5 cm depth
+      units: degree_Celsius
+      description: >-
+        Average soil temperature at 5 cm below the surface, in degrees C.
+        See Note M.
+
+    - name: wetness
+      long_name: 5-min average wetness
+      units: ohm
+      description: >-
+        The presence or absence of moisture due to precipitation, in Ohms.
+        High values (>= 1000) indicate an absence of moisture.
+        Low values (< 1000) indicate the presence of moisture.
+    - name: wet_flag
+      long_name: QC flag for 5-min average wetness
+      units: null
+      description: >-
+        QC flag for the wetness measurement.
+        0 denotes good data,
+        1 denotes field-length overflow,
+        and 3 denotes erroneous data.
+        See Note I.
+      dtype: string
+      categories: ["0", "1", "3"]
+
+    - name: wind_1_5
+      long_name: 5-min average wind speed at 1.5 m
+      units: m s-1
+      description: Average wind speed, in meters per second, at a height of 1.5 meters.
+    - name: wind_flag
+      long_name: QC flag for 5-min average wind speed
+      units: null
+      description: >-
+        QC flag for the wind speed measurement.
+        0 denotes good data,
+        1 denotes field-length overflow,
+        and 3 denotes erroneous data.
+        See Note I.
+      dtype: string
+      categories: ["0", "1", "3"]
+
 hourly:
   base_url: https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02
   time_var: utc_time

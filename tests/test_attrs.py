@@ -64,9 +64,20 @@ def test_load_attrs():
         assert set(d) == {"base_url", "time_var", "columns"}
         assert d["time_var"] in d["columns"]
         assert not d["base_url"].endswith("/")
+        for _, variable_dict in d["columns"].items():
+            assert set(variable_dict) == {
+                "name",
+                "long_name",
+                "units",
+                "description",
+                "dtype",
+                "categories",
+                "xarray_only",
+            }
 
 
 def test_load_col_info():
+    get_col_info("subhourly")
     get_col_info("daily")
     get_col_info("hourly")
     get_col_info("monthly")

@@ -93,6 +93,49 @@ def parse_url(url: str) -> _ParseRes:
     return parse_fp(urlsplit(url).path)
 
 
+def read_subhourly(fp, *, cat: bool = False) -> pd.DataFrame:
+    """Read a subhourly CRN file.
+
+    For example:
+    https://www.ncei.noaa.gov/pub/data/uscrn/products/subhourly01/2019/CRNS0101-05-2019-CO_Boulder_14_W.txt
+
+    Parameters
+    ----------
+    cat
+        Convert some columns to pandas categorical type.
+    """
+    from .attrs import get_col_info
+
+    col_info = get_col_info("subhourly")
+    df = pd.read_csv(
+        fp,
+        delim_whitespace=True,
+        header=None,
+        names=col_info.names,
+        dtype=col_info.dtypes,
+        parse_dates={"utc_time_": ["utc_date", "utc_time"], "lst_time_": ["lst_date", "lst_time"]},
+        date_format=r"%Y%m%d %H%M",
+        na_values=["-99999", "-9999"],
+    )
+    df = df.rename(columns={"utc_time_": "utc_time", "lst_time_": "lst_time"})
+
+    # Set soil moisture -99 to NaN
+    sm_cols = df.columns[df.columns.str.startswith("soil_moisture_")]
+    df[sm_cols] = df[sm_cols].replace(-99, np.nan)
+
+    # Unknown datalogger version
+    df["crx_vn"] = df["crx_vn"].replace("-9.000", np.nan)
+
+    # Category cols?
+    if cat:
+        for col, cats in col_info.categorical.items():
+            df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
+
+    df.attrs.update(which="subhourly")
+
+    return df
+
+
 def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
     """Read an hourly CRN file.
 
@@ -224,6 +267,7 @@ def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
 
 
 _which_to_reader = {
+    "subhourly": read_subhourly,
     "hourly": read_hourly,
     "daily": read_daily,
     "monthly": read_monthly,
@@ -242,7 +286,7 @@ def read(fp, *, cat: bool = False) -> pd.DataFrame:
 
 def get_data(
     years: int | Iterable[int] | None = None,
-    which: Literal["hourly", "daily", "monthly"] = "daily",
+    which: Literal["subhourly", "hourly", "daily", "monthly"] = "daily",
     *,
     n_jobs: int | None = -2,
     cat: bool = False,
@@ -396,7 +440,7 @@ def get_data(
 
 def to_xarray(
     df: pd.DataFrame,
-    which: Literal["hourly", "daily", "monthly"] | None = None,
+    which: Literal["subhourly", "hourly", "daily", "monthly"] | None = None,
 ) -> xr.Dataset:
     """Convert to an xarray dataset.
 
