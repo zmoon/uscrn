@@ -274,7 +274,9 @@ def get_col_info(
     )
 
 
-def _get_docs(which: Literal["hourly", "daily", "monthly"] = "daily") -> tuple[str, str]:
+def _get_docs(
+    which: Literal["subhourly", "hourly", "daily", "monthly"] = "daily"
+) -> tuple[str, str]:
     """Get the header and readme docs as strings.
 
     The files are downloaded if they:
