@@ -274,7 +274,7 @@ def get_data(
     import requests
     from joblib import Parallel, delayed
 
-    from .attrs import load_attrs, validate_which
+    from .attrs import get_col_info, load_attrs, validate_which
 
     validate_which(which)
 
@@ -341,6 +341,7 @@ def get_data(
         print(f"Using the first {_GET_CAP} files only")
 
     print("Reading files...")
+    _ = get_col_info(which)  # ensure cached
     read = _which_to_reader[which]
     dfs = Parallel(n_jobs=n_jobs, verbose=10)(delayed(read)(url) for url in urls)
 
