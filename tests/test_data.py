@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
+from packaging.version import Version
 
 import uscrn
 from uscrn.data import (
@@ -110,3 +111,16 @@ def test_get(which):
     else:
         assert ds.title == f"U.S. Climate Reference Network (USCRN) | {which} | 2019"
     assert set(np.unique(ds.time.dt.year)) >= {2019}
+
+
+@pytest.mark.xfail(Version(pd.__version__) < Version("2.1"), reason="requires pandas 2.1+")
+def test_df_attrs_roundtrip(tmp_path):
+    df = get_data(2019, which="daily", n_jobs=N)
+
+    fp = tmp_path / "test.parquet"
+    df.to_parquet(fp)
+    df2 = pd.read_parquet(fp, engine="pyarrow")
+    # NOTE: doesn't work with fastparquet engine currently
+
+    assert df.attrs is not df2.attrs
+    assert df.attrs == df2.attrs
