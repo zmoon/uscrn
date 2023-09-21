@@ -281,9 +281,10 @@ def get_data(
     if which == "monthly" and years is not None:
         warnings.warn("`years` ignored for monthly data.")
 
-    attrs = load_attrs()
+    stored_attrs = load_attrs()
+    col_info = get_col_info(which)
 
-    base_url = attrs[which]["base_url"]
+    base_url = stored_attrs[which]["base_url"]
 
     # Get available years from the main page
     # e.g. `>2000/<`
@@ -341,7 +342,6 @@ def get_data(
         print(f"Using the first {_GET_CAP} files only")
 
     print("Reading files...")
-    _ = get_col_info(which)  # ensure cached
     read = _which_to_reader[which]
     dfs = Parallel(n_jobs=n_jobs, verbose=10)(delayed(read)(url) for url in urls)
 
@@ -367,13 +367,17 @@ def get_data(
 
     # Category cols?
     if cat:
-        for col in df.columns:
-            cats = attrs[which]["columns"][col]["categories"]
-            if cats is not False:
-                df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
+        for col, cats in col_info.categorical.items():
+            df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
     now = datetime.datetime.now(datetime.timezone.utc)
-    df.attrs.update(which=which, created=now, source=base_url)
+    df.attrs.update(
+        which=which,
+        created=str(now),
+        source=base_url,
+        attrs=col_info.attrs,  # NOTE: nested, may not survive storage roundtrip
+        notes=col_info.notes,
+    )
 
     return df
 
@@ -403,13 +407,13 @@ def to_xarray(
 
     validate_which(which)
 
-    info = load_attrs()
-    var_attrs = info[which]["columns"]
-    base_url = info[which]["base_url"]
-    time_var = info[which]["time_var"]
+    stored_attrs = load_attrs()
+    var_attrs = stored_attrs[which]["columns"]
+    base_url = stored_attrs[which]["base_url"]
+    time_var = stored_attrs[which]["time_var"]
 
-    info2 = get_col_info(which)
-    notes = info2.notes
+    col_info = get_col_info(which)
+    notes = col_info.notes
 
     ds = (
         df.set_index(["wban", time_var])
