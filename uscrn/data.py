@@ -267,6 +267,7 @@ def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
 
 
 _which_to_reader = {
+    "subhourly": read_subhourly,
     "hourly": read_hourly,
     "daily": read_daily,
     "monthly": read_monthly,
@@ -285,7 +286,7 @@ def read(fp, *, cat: bool = False) -> pd.DataFrame:
 
 def get_data(
     years: int | Iterable[int] | None = None,
-    which: Literal["hourly", "daily", "monthly"] = "daily",
+    which: Literal["subhourly", "hourly", "daily", "monthly"] = "daily",
     *,
     n_jobs: int | None = -2,
     cat: bool = False,
@@ -439,7 +440,7 @@ def get_data(
 
 def to_xarray(
     df: pd.DataFrame,
-    which: Literal["hourly", "daily", "monthly"] | None = None,
+    which: Literal["subhourly", "hourly", "daily", "monthly"] | None = None,
 ) -> xr.Dataset:
     """Convert to an xarray dataset.
 
