@@ -309,6 +309,8 @@ def get_data(
             years_ = available_years[:]
         else:
             years_ = list(years)
+            if len(years_) == 0:
+                raise ValueError("years should be not be empty")
 
         def get_year_urls(year):
             if year not in available_years:
@@ -371,8 +373,17 @@ def get_data(
             df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
     now = datetime.datetime.now(datetime.timezone.utc)
+    title = f"U.S. Climate Reference Network (USCRN) | {which}"
+    if which == "monthly":
+        pass  # always all years
+    else:
+        if len(years_) == 1:
+            title += f" | {years_[0]}"
+        else:
+            title += f" | {years_[0]}--{years_[-1]}"
     df.attrs.update(
         which=which,
+        title=title,
         created=str(now),
         source=base_url,
         attrs=col_info.attrs,  # NOTE: nested, may not survive storage roundtrip
