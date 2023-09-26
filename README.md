@@ -7,6 +7,8 @@ Easily load [U.S. Climate Reference Network data](https://www.ncei.noaa.gov/acce
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/zmoon/uscrn/main.svg)](https://results.pre-commit.ci/latest/github/zmoon/uscrn/main)
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 
+With `uscrn`, fetching and loading years of [data](https://www.ncei.noaa.gov/access/crn/qcdatasets.html) for all CRN sites[^a] takes just one line of code[^b].
+
 Example:
 
 ```python
@@ -32,3 +34,6 @@ mamba create -n crn -c conda-forge python=3.10 joblib numpy pandas pyyaml reques
 mamba activate crn
 pip install --no-deps uscrn
 ```
+
+[^a]: Use `uscrn.load_meta()` to load the site metadata table.
+[^b]: Not counting the `import` statement...
