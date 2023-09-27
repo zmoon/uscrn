@@ -308,6 +308,7 @@ def get_data(
     ----------
     years
         Year(s) to get data for. If ``None`` (default), get all available years.
+        If `which` is ``'monthly'``, `years` is ignored and you always get all available years.
     which
         Which dataset.
     n_jobs
