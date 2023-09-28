@@ -124,6 +124,8 @@ def test_get(which):
                 with xr.set_options(keep_attrs=True):
                     da += 273.15
                     da.attrs.update(units="K")
+            if which == "subhourly" and vn == "relative_humidity":
+                da = da.where(ds.rh_flag == "0")
             da_min = da.min()
             if np.isnan(da_min):
                 warnings.warn(f"All NaN {which}.{vn}")
