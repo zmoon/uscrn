@@ -455,6 +455,9 @@ def to_xarray(
 ) -> xr.Dataset:
     """Convert to an xarray dataset.
 
+    Soil variables will be combined, with a soil depth dimension added,
+    if applicable (hourly, daily).
+
     Parameters
     ----------
     df
