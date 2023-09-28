@@ -242,7 +242,7 @@ hourly:
         See Note F.
     - name: t_{max,min}
       long_name: hourly {maximum,minimum} air temperature
-      units: Degree_Celsius
+      units: degree_Celsius
       description: >-
         {Maximum,Minimum} air temperature,
         in degrees C,
@@ -372,6 +372,7 @@ daily:
         The version number of the station datalogger program that was in effect
         at the time of the observation.
         Note: This field should be treated as text (i.e. string).
+      dtype: string
 
     - name: "{longitude,latitude}"
       long_name: station {longitude,latitude}

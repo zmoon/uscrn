@@ -1,8 +1,10 @@
+import warnings
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
+import xarray as xr
 from packaging.version import Version
 
 import uscrn
@@ -111,6 +113,29 @@ def test_get(which):
     else:
         assert ds.title == f"U.S. Climate Reference Network (USCRN) | {which} | 2019"
     assert set(np.unique(ds.time.dt.year)) >= {2019}
+
+    # Check no -99s and such remain
+    for vn in ds.data_vars:
+        da = ds[vn]
+        is_float = pd.api.types.is_float_dtype(da.dtype)
+        is_string = pd.api.types.is_string_dtype(da.dtype)
+        if is_float:
+            if da.units == "degree_Celsius":
+                with xr.set_options(keep_attrs=True):
+                    da += 273.15
+                    da.attrs.update(units="K")
+            da_min = da.min()
+            if np.isnan(da_min):
+                warnings.warn(f"All NaN {which}.{vn}")
+                continue
+            assert da_min > -99
+            if da_min < 0:
+                warnings.warn(
+                    f"Negative values found in {which}.{vn}:\n"
+                    f"{da.where(da < 0).to_series().value_counts()}"
+                )
+        elif is_string:
+            assert da.to_series().str.startswith("-9").sum() == 0
 
 
 @pytest.mark.parametrize("engine", ["pyarrow", "fastparquet"])

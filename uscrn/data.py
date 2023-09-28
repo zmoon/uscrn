@@ -126,6 +126,10 @@ def read_subhourly(fp, *, cat: bool = False) -> pd.DataFrame:
     # Unknown datalogger version
     df["crx_vn"] = df["crx_vn"].replace("-9.000", np.nan)
 
+    # Lower precision floats
+    cols = ["wind_1_5"]
+    df[cols] = df[cols].replace(-99, np.nan)
+
     # Category cols?
     if cat:
         for col, cats in col_info.categorical.items():
