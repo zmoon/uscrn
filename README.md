@@ -16,7 +16,7 @@ import uscrn as crn
 
 df = crn.get_data(2019, "hourly", n_jobs=6)  # pandas.DataFrame
 
-ds = crn.to_xarray(df)  # xarray.Dataset
+ds = crn.to_xarray(df)  # xarray.Dataset, with soil depth dimension if applicable (hourly, daily)
 ```
 
 Both `df` (pandas) and `ds` (xarray) include dataset and variable metadata.
