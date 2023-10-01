@@ -34,7 +34,7 @@ jobs:
         run: pytest --cov uscrn
 
       - name: Upload coverage to Codecov
-        if: ${{ matrix.python-version }} == "3.11"
+        if: ${{ matrix.python-version == '3.11' }}
         uses: codecov/codecov-action@v3
 
       - name: Check type annotations
