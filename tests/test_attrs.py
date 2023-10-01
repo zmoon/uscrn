@@ -35,10 +35,16 @@ from uscrn.attrs import (
             "Hi there, I'm a {cat,dog}. {Meow,Woof}!",
             ["Hi there, I'm a cat. Meow!", "Hi there, I'm a dog. Woof!"],
         ),
+        ("a{b, 'c\"}", ["ab", "a'c\""]),
     ],
 )
 def test_expand_str(s, expected):
     assert expand_str(s) == expected
+
+
+def test_expand_str_error():
+    with pytest.raises(ValueError, match="^Number of options"):
+        expand_str("a{'1', '2'} + b{'3', '4', '5'}")
 
 
 def test_expand_strs():
