@@ -66,6 +66,25 @@ def test_load_meta():
     assert meta[["country", "state"]].isnull().sum().sum() == 0
 
 
+def test_load_meta_cat():
+    meta = load_meta(cat=True)
+    cats = meta.select_dtypes("category")
+    assert set(cats) == {"status", "operation", "network"}
+    assert set(meta.status.cat.categories) == {
+        "Commissioned",
+        "Experimental",
+        "Non-comissioned",
+        "Test-site",
+    }
+    assert set(meta.operation.cat.categories) == {
+        "Abandoned",
+        "Closed",
+        "Non-operational",
+        "Operational",
+    }
+    assert set(meta.network.cat.categories) >= {"USCRN", "USRCRN"}
+
+
 def test_get_hourly():
     df = read_hourly(EXAMPLE_URL["hourly"])
     assert len(df) > 0
