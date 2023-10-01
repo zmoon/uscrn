@@ -93,11 +93,11 @@ DEFAULT_WHICH: Final = "daily"
 def validate_which(which: str) -> None:
     if which not in _ALL_WHICHS:
         msg = f"Invalid dataset identifier: {which!r}. Valid identifiers are: {_ALL_WHICHS}."
-        if len(WHICHS) < len(_ALL_WHICHS):
+        if len(WHICHS) < len(_ALL_WHICHS):  # pragma: no cover
             msg += f" These have been implemented: {WHICHS}."
         raise ValueError(msg)
 
-    if which not in WHICHS:
+    if which not in WHICHS:  # pragma: no cover
         raise NotImplementedError(
             f"Dataset {which!r} not yet implemented. These have been implemented: {WHICHS}."
         )
@@ -126,7 +126,7 @@ def load_attrs() -> dict[str, dict[str, Any]]:
 
     # Expand column entries
     for which in WHICHS:
-        if which not in attrs:
+        if which not in attrs:  # pragma: no cover
             continue
         var_attrs = list(
             itertools.chain.from_iterable(expand_strs(d) for d in attrs[which]["columns"])
@@ -252,7 +252,7 @@ def get_col_info(
         if line_.startswith("IMPORTANT NOTES:"):
             notes += dedent("\n".join(readme_lines[i + 1 :]))
             break
-    else:
+    else:  # pragma: no cover
         raise AssertionError("Expected readme line starting with 'IMPORTANT NOTES:'")
 
     # Construct dtype dict (for ``read_csv``)

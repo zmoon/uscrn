@@ -7,10 +7,12 @@ from uscrn.attrs import (
     _ALL_WHICHS,
     DEFAULT_WHICH,
     WHICHS,
+    _map_dtype,
     expand_str,
     expand_strs,
     get_col_info,
     load_attrs,
+    validate_which,
 )
 
 
@@ -53,6 +55,16 @@ def test_expand_strs():
         {"greeting": "Hi there, I'm a 🐱. Meow!", "type": "cat"},
         {"greeting": "Hi there, I'm a 🐶. Woof!", "type": "dog"},
     ]
+
+
+def test_validate_which():
+    with pytest.raises(ValueError, match="^Invalid dataset identifier: 'asdf'"):
+        validate_which("asdf")
+
+
+def test_invalid_dtype():
+    with pytest.raises(ValueError, match="^Unknown dtype: 'asdf'"):
+        _map_dtype("asdf")
 
 
 def test_load_attrs():
