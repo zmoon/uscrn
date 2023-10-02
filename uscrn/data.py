@@ -365,7 +365,7 @@ def get_data(
         else:
             years_ = list(years)
             if len(years_) == 0:
-                raise ValueError("years should be not be empty")
+                raise ValueError("years should not be empty")
 
         def get_year_urls(year):
             if year not in available_years:

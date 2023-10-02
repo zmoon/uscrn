@@ -168,6 +168,27 @@ def test_get(which):
             assert da.to_series().str.startswith("-9").sum() == 0
 
 
+def test_get_bad_year():
+    with pytest.raises(ValueError, match="^year 1900 not in detected available CRN years"):
+        get_data(1900)
+
+    with pytest.raises(ValueError, match="^years should not be empty"):
+        get_data([])
+
+
+def test_get_years_default():
+    df = get_data(None, "daily", n_jobs=N)
+    # With get-cap set as we have it, should get just first year data (2000)
+    unique_years = df["lst_date"].dt.year.unique()
+    assert unique_years.size == 1
+    assert unique_years[0] == 2000
+
+
+def test_to_xarray_no_which_attr():
+    with pytest.raises(NotImplementedError, match="^Guessing `which`"):
+        to_xarray(pd.DataFrame())
+
+
 @pytest.mark.parametrize("engine", ["pyarrow", "fastparquet"])
 def test_df_parquet_roundtrip(tmp_path, engine):
     df = get_data(2019, which="daily", n_jobs=N, cat=True)
