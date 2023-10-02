@@ -8,15 +8,7 @@ import xarray as xr
 from packaging.version import Version
 
 import uscrn
-from uscrn.data import (
-    _which_to_reader,
-    get_data,
-    load_meta,
-    parse_url,
-    read_daily,
-    read_hourly,
-    to_xarray,
-)
+from uscrn.data import _which_to_reader, get_data, load_meta, parse_fp, parse_url, read, to_xarray
 
 HERE = Path(__file__).parent
 DATA = HERE / "data"
@@ -66,24 +58,55 @@ def test_load_meta():
     assert meta[["country", "state"]].isnull().sum().sum() == 0
 
 
-def test_get_hourly():
-    df = read_hourly(EXAMPLE_URL["hourly"])
+def test_load_meta_cat():
+    meta = load_meta(cat=True)
+    cats = meta.select_dtypes("category")
+    assert set(cats) == {"status", "operation", "network"}
+    assert set(meta.status.cat.categories) == {
+        "Commissioned",
+        "Experimental",
+        "Non-comissioned",
+        "Test-site",
+    }
+    assert set(meta.operation.cat.categories) == {
+        "Abandoned",
+        "Closed",
+        "Non-operational",
+        "Operational",
+    }
+    assert set(meta.network.cat.categories) >= {"USCRN", "USRCRN"}
+
+
+@pytest.mark.parametrize("which, url", EXAMPLE_URL.items())
+def test_read(which, url):
+    # NOTE: subhourly takes a bit
+    df = getattr(uscrn, f"read_{which}")(url)
     assert len(df) > 0
-    assert "soil_moisture_10" in df
+
+    df_cat = getattr(uscrn, f"read_{which}")(url, cat=True)
+    assert len(df_cat.select_dtypes("category").columns) > 0
+
+    df_auto = read(url)
+    assert df_auto.equals(df)
 
     ds = to_xarray(df)
-    assert {"soil_moisture", "soil_temp"} < set(ds.data_vars)
-    assert "soil_moisture_10" not in ds
 
-
-def test_get_daily():
-    df = read_daily(EXAMPLE_URL["daily"])
-    assert len(df) > 0
-    assert "soil_moisture_10_daily" in df
-
-    ds = to_xarray(df)
-    assert {"soil_moisture_daily", "soil_temp_daily"} < set(ds.data_vars)
-    assert "soil_moisture_10_daily" not in ds
+    if which == "subhourly":
+        assert "depth" not in ds.dims
+    elif which == "hourly":
+        assert "soil_moisture_10" in df
+        assert "depth" in ds.dims
+        assert {"soil_moisture", "soil_temp"} < set(ds.data_vars)
+        assert "soil_moisture_10" not in ds
+    elif which == "daily":
+        assert "soil_moisture_10_daily" in df
+        assert "depth" in ds.dims
+        assert {"soil_moisture_daily", "soil_temp_daily"} < set(ds.data_vars)
+        assert "soil_moisture_10_daily" not in ds
+    elif which == "monthly":
+        assert "depth" not in ds.dims
+    else:
+        raise AssertionError
 
 
 def test_which_to_reader():
@@ -100,6 +123,11 @@ def test_parse_url(which, url):
     assert res.state == "CO"
     assert res.location == "Boulder"
     assert res.vector == "14 W"
+
+
+def test_parse_fp_bad():
+    with pytest.raises(ValueError, match="^Unknown CRN file type."):
+        parse_fp("asdf")
 
 
 @pytest.mark.parametrize("which", uscrn.attrs.WHICHS)
@@ -138,6 +166,27 @@ def test_get(which):
                 )
         elif is_string:
             assert da.to_series().str.startswith("-9").sum() == 0
+
+
+def test_get_bad_year():
+    with pytest.raises(ValueError, match="^year 1900 not in detected available CRN years"):
+        get_data(1900)
+
+    with pytest.raises(ValueError, match="^years should not be empty"):
+        get_data([])
+
+
+def test_get_years_default():
+    df = get_data(None, "daily", n_jobs=N)
+    # With get-cap set as we have it, should get just first year data (2000)
+    unique_years = df["lst_date"].dt.year.unique()
+    assert unique_years.size == 1
+    assert unique_years[0] == 2000
+
+
+def test_to_xarray_no_which_attr():
+    with pytest.raises(NotImplementedError, match="^Guessing `which`"):
+        to_xarray(pd.DataFrame())
 
 
 @pytest.mark.parametrize("engine", ["pyarrow", "fastparquet"])

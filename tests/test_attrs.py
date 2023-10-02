@@ -7,10 +7,12 @@ from uscrn.attrs import (
     _ALL_WHICHS,
     DEFAULT_WHICH,
     WHICHS,
+    _map_dtype,
     expand_str,
     expand_strs,
     get_col_info,
     load_attrs,
+    validate_which,
 )
 
 
@@ -35,10 +37,16 @@ from uscrn.attrs import (
             "Hi there, I'm a {cat,dog}. {Meow,Woof}!",
             ["Hi there, I'm a cat. Meow!", "Hi there, I'm a dog. Woof!"],
         ),
+        ("a{b, 'c\"}", ["ab", "a'c\""]),
     ],
 )
 def test_expand_str(s, expected):
     assert expand_str(s) == expected
+
+
+def test_expand_str_error():
+    with pytest.raises(ValueError, match="^Number of options"):
+        expand_str("a{'1', '2'} + b{'3', '4', '5'}")
 
 
 def test_expand_strs():
@@ -47,6 +55,16 @@ def test_expand_strs():
         {"greeting": "Hi there, I'm a 🐱. Meow!", "type": "cat"},
         {"greeting": "Hi there, I'm a 🐶. Woof!", "type": "dog"},
     ]
+
+
+def test_validate_which():
+    with pytest.raises(ValueError, match="^Invalid dataset identifier: 'asdf'"):
+        validate_which("asdf")
+
+
+def test_invalid_dtype():
+    with pytest.raises(ValueError, match="^Unknown dtype: 'asdf'"):
+        _map_dtype("asdf")
 
 
 def test_load_attrs():
