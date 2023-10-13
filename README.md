@@ -28,11 +28,11 @@ writing to Parquet with the PyArrow engine with pandas v2.1+.
 df.to_parquet("crn_2019_hourly.parquet", engine="pyarrow")
 ```
 
-Mamba install example:
+Conda install example:
 
 ```sh
-mamba create -n crn -c conda-forge python=3.10 joblib numpy pandas pyyaml requests xarray pyarrow netcdf4
-mamba activate crn
+conda create -n crn -c conda-forge python=3.10 joblib numpy pandas pyyaml requests xarray pyarrow netcdf4
+conda activate crn
 pip install --no-deps uscrn
 ```
 
