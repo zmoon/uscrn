@@ -2,7 +2,7 @@
 Load U.S. CRN data.
 """
 
-__version__ = "0.1.0b0"
+__version__ = "0.1.0b2"
 
 from .attrs import load_attrs
 from .data import (
