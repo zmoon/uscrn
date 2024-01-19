@@ -18,9 +18,9 @@ extensions = [
     "sphinx.ext.mathjax",
     # "sphinx.ext.viewcode",
     # "sphinx_jinja",
+    "myst_nb",
     "sphinx_click",
     "sphinx_copybutton",
-    "myst_parser",
 ]
 
 intersphinx_mapping = {
@@ -58,3 +58,6 @@ napoleon_use_rtype = False
 
 autodoc_typehints = "description"
 autosummary_generate = True
+
+nb_execution_mode = "cache"
+nb_execution_excludepatterns = ["examples/daily.ipynb"]

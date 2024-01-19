@@ -38,6 +38,7 @@ dev = [
 ]
 doc = [
     "jupyterlab",
+    "matplotlib",
     "myst-nb",
     "myst-parser",
     "sphinx",
