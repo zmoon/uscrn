@@ -3,6 +3,7 @@
 *.parquet.*
 !tests/data/crn_2020.parquet.gz
 uscrn/cache/
+docs/api/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

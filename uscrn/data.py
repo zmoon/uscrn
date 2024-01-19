@@ -279,7 +279,15 @@ _which_to_reader = {
 
 
 def read(fp, *, cat: bool = False) -> pd.DataFrame:
-    """Read a CRN file, auto-detecting which reader to use based on file name."""
+    """Read a CRN file, auto-detecting which reader to use based on file name.
+
+    See Also
+    --------
+    read_daily
+    read_hourly
+    read_monthly
+    read_subhourly
+    """
     from .attrs import validate_which
 
     res = parse_url(fp)
@@ -322,6 +330,11 @@ def get_data(
         Convert some columns to pandas categorical type.
     dropna
         Drop rows where all data cols are missing data.
+
+    See Also
+    --------
+    :doc:`/examples/daily`
+        Notebook example demonstrating using this function to get a year of daily data.
     """
     import re
     from itertools import chain
