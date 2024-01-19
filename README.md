@@ -28,7 +28,7 @@ writing to Parquet with the PyArrow engine with pandas v2.1+.
 df.to_parquet("crn_2019_hourly.parquet", engine="pyarrow")
 ```
 
-Conda install example:
+Conda install example[^c]:
 
 ```sh
 conda create -n crn -c conda-forge python=3.10 joblib numpy pandas pyyaml requests xarray pyarrow netcdf4
@@ -38,3 +38,4 @@ pip install --no-deps uscrn
 
 [^a]: Use `uscrn.load_meta()` to load the site metadata table.
 [^b]: Not counting the `import` statement...
+[^c]: `uscrn` is not yet on conda-forge.
