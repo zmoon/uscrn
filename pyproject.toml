@@ -36,6 +36,15 @@ test = [
 dev = [
     "ipython",
 ]
+doc = [
+    "jupyterlab",
+    "myst-nb",
+    "myst-parser",
+    "sphinx",
+    "sphinx-book-theme",
+    "sphinx-click",
+    "sphinx-copybutton",
+]
 
 [tool.flit.sdist]
 exclude = [".github/", ".gitignore", "tests/"]
