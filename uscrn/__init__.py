@@ -1,5 +1,5 @@
 """
-Load U.S. CRN data.
+Load `U.S. Climate Reference Network <https://www.ncei.noaa.gov/access/crn/>`__ (USCRN) data.
 """
 
 __version__ = "0.1.0b3"
