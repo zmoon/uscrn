@@ -16,6 +16,40 @@ _GET_CAP: int | None = None
 """Restrict how many files to load, for testing purposes."""
 
 
+def retry(func):
+    """Retry a function on connection error.
+    Up to 60 s, with Fibonacci backoff (1, 1, 2, 3, ...).
+    """
+    import urllib
+    from functools import wraps
+
+    import requests
+
+    max_time = 60  # seconds
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        from time import perf_counter_ns, sleep
+
+        t0 = perf_counter_ns()
+        a, b = 1, 1
+        while True:
+            try:
+                return func(*args, **kwargs)
+            except (urllib.error.URLError, requests.exceptions.ConnectionError):
+                if perf_counter_ns() - t0 > max_time * 1_000_000_000:
+                    raise
+                warnings.warn(  # TODO: remove or switch to logging?
+                    f"Retrying {func.__name__} in {a} s after connection error",
+                    stacklevel=2,
+                )
+                sleep(a)
+                a, b = b, a + b  # Fibonacci backoff
+
+    return wrapper
+
+
+@retry
 def load_meta(*, cat: bool = False) -> pd.DataFrame:
     """Load the station metadata table.
 
@@ -98,6 +132,7 @@ def parse_url(url: str) -> _ParseRes:
     return parse_fp(urlsplit(url).path)
 
 
+@retry
 def read_subhourly(fp, *, cat: bool = False) -> pd.DataFrame:
     """Read a subhourly USCRN file.
 
@@ -148,6 +183,7 @@ def read_subhourly(fp, *, cat: bool = False) -> pd.DataFrame:
     return df
 
 
+@retry
 def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
     """Read an hourly USCRN file.
 
@@ -194,6 +230,7 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
     return df
 
 
+@retry
 def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     """Read a daily USCRN file.
 
@@ -236,6 +273,7 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     return df
 
 
+@retry
 def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
     """Read a monthly USCRN file.
 
