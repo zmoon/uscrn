@@ -1,5 +1,5 @@
 """
-Load CRN data from NCEI.
+Load USCRN data from NCEI.
 """
 from __future__ import annotations
 
@@ -58,7 +58,7 @@ class _ParseRes(NamedTuple):
 
 
 def parse_fp(fp: str) -> _ParseRes:
-    """Parse CRN file path."""
+    """Parse USCRN file path."""
     from pathlib import Path
 
     p = Path(fp)
@@ -73,7 +73,7 @@ def parse_fp(fp: str) -> _ParseRes:
         which = "monthly"
     else:
         raise ValueError(
-            "Unknown CRN file type. Expected the name to start with `CRN{S,H,D,M}0`. "
+            "Unknown USCRN file type. Expected the name to start with `CRN{S,H,D,M}0`. "
             f"Got: {p.name!r}."
         )
 
@@ -87,14 +87,14 @@ def parse_fp(fp: str) -> _ParseRes:
 
 
 def parse_url(url: str) -> _ParseRes:
-    """Parse CRN file path from URL."""
+    """Parse USCRN file path from URL."""
     from urllib.parse import urlsplit
 
     return parse_fp(urlsplit(url).path)
 
 
 def read_subhourly(fp, *, cat: bool = False) -> pd.DataFrame:
-    """Read a subhourly CRN file.
+    """Read a subhourly USCRN file.
 
     For example:
     https://www.ncei.noaa.gov/pub/data/uscrn/products/subhourly01/2019/CRNS0101-05-2019-CO_Boulder_14_W.txt
@@ -144,7 +144,7 @@ def read_subhourly(fp, *, cat: bool = False) -> pd.DataFrame:
 
 
 def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
-    """Read an hourly CRN file.
+    """Read an hourly USCRN file.
 
     For example:
     https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/2019/CRNH0203-2019-CO_Boulder_14_W.txt
@@ -190,7 +190,7 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
 
 
 def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
-    """Read a daily CRN file.
+    """Read a daily USCRN file.
 
     For example:
     https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/2019/CRND0103-2019-CO_Boulder_14_W.txt
@@ -232,7 +232,7 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
 
 
 def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
-    """Read a monthly CRN file.
+    """Read a monthly USCRN file.
 
     For example:
     https://www.ncei.noaa.gov/pub/data/uscrn/products/monthly01/CRNM0102-CO_Boulder_14_W.txt
@@ -285,7 +285,7 @@ _which_to_reader = {
 
 
 def read(fp, *, cat: bool = False) -> pd.DataFrame:
-    """Read a CRN file, auto-detecting which reader to use based on file name.
+    """Read a USCRN file, auto-detecting which reader to use based on file name.
 
     See Also
     --------
@@ -310,7 +310,7 @@ def get_data(
     cat: bool = False,
     dropna: bool = False,
 ) -> pd.DataFrame:
-    """Get CRN data.
+    """Get USCRN data.
 
     * Home page: https://www.ncei.noaa.gov/access/crn/
     * Info: https://www.ncei.noaa.gov/access/crn/qcdatasets.html
@@ -389,7 +389,7 @@ def get_data(
         def get_year_urls(year):
             if year not in available_years:
                 raise ValueError(
-                    f"year {year} not in detected available CRN years {available_years}"
+                    f"year {year} not in detected available USCRN years {available_years}"
                 )
 
             # Get filenames from the year page
@@ -399,7 +399,7 @@ def get_data(
             r.raise_for_status()
             fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
             if not fns:
-                warnings.warn(f"no CRN files found for year {year} (url {url})", stacklevel=2)
+                warnings.warn(f"no USCRN files found for year {year} (url {url})", stacklevel=2)
 
             return (f"{base_url}/{year}/{fn}" for fn in fns)
 

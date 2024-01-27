@@ -1,5 +1,9 @@
 """
 Load `U.S. Climate Reference Network <https://www.ncei.noaa.gov/access/crn/>`__ (USCRN) data.
+
+* Home page: https://www.ncei.noaa.gov/access/crn/
+* Info: https://www.ncei.noaa.gov/access/crn/qcdatasets.html
+* Data: https://www.ncei.noaa.gov/pub/data/uscrn/products/
 """
 
 __version__ = "0.1.0b3"
