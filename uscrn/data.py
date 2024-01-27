@@ -398,7 +398,7 @@ def get_data(
             r = requests.get(url)
             r.raise_for_status()
             fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
-            if not fns:
+            if not fns:  # pragma: no cover
                 warnings.warn(f"no USCRN files found for year {year} (url {url})", stacklevel=2)
 
             return (f"{base_url}/{year}/{fn}" for fn in fns)
@@ -438,8 +438,8 @@ def get_data(
     data_cols = [c for c in df.columns if c not in non_data_cols]
     if dropna:
         df = df.dropna(subset=data_cols, how="all").reset_index(drop=True)
-        if df.empty:
-            warnings.warn("CRN dataframe empty after dropping missing data rows")
+        if df.empty:  # pragma: no cover
+            warnings.warn("USCRN dataframe empty after dropping missing data rows")
 
     # Category cols?
     if cat:
