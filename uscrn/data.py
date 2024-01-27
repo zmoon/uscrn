@@ -406,7 +406,7 @@ def get_data(
     # Get available years from the main page
     # e.g. `>2000/<`
     print("Discovering files...")
-    r = requests.get(f"{base_url}/")
+    r = requests.get(f"{base_url}/", timeout=10)  # TODO: could cache this info like the docs
     r.raise_for_status()
     urls: list[str]
     if which == "monthly":
@@ -438,7 +438,7 @@ def get_data(
             # Get filenames from the year page
             # e.g. `>CRND0103-2020-TX_Palestine_6_WNW.txt<`
             url = f"{base_url}/{year}/"
-            r = requests.get(url)
+            r = requests.get(url, timeout=10)  # TODO: could cache this info like the docs
             r.raise_for_status()
             fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
             if not fns:  # pragma: no cover

@@ -306,7 +306,7 @@ def _get_docs(
             needs_update = True
 
         if needs_update:
-            r = requests.get(url)
+            r = requests.get(url, timeout=10)
             r.raise_for_status()
             with open(fp, "w") as f:
                 f.write(r.text)
