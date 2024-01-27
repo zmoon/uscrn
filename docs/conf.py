@@ -33,7 +33,7 @@ intersphinx_mapping = {
 
 exclude_patterns = ["_build"]
 
-html_title = "uscrn"
+html_title = "USCRN Python"
 html_theme = "sphinx_book_theme"
 
 html_theme_options = {

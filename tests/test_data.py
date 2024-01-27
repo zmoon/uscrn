@@ -126,7 +126,7 @@ def test_parse_url(which, url):
 
 
 def test_parse_fp_bad():
-    with pytest.raises(ValueError, match="^Unknown CRN file type."):
+    with pytest.raises(ValueError, match="^Unknown USCRN file type."):
         parse_fp("asdf")
 
 
@@ -169,7 +169,7 @@ def test_get(which):
 
 
 def test_get_bad_year():
-    with pytest.raises(ValueError, match="^year 1900 not in detected available CRN years"):
+    with pytest.raises(ValueError, match="^year 1900 not in detected available USCRN years"):
         get_data(1900)
 
     with pytest.raises(ValueError, match="^years should not be empty"):

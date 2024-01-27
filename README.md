@@ -9,16 +9,16 @@ Easily load [U.S. Climate Reference Network](https://www.ncei.noaa.gov/access/cr
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/zmoon/uscrn/main.svg)](https://results.pre-commit.ci/latest/github/zmoon/uscrn/main)
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 
-With `uscrn`, fetching and loading years of [data](https://www.ncei.noaa.gov/access/crn/qcdatasets.html) for all CRN sites[^a] takes just one line of code[^b].
+With `uscrn`, fetching and loading years of [data](https://www.ncei.noaa.gov/access/crn/qcdatasets.html) for all USCRN sites[^a] takes just one line of code[^b].
 
 Example:
 
 ```python
-import uscrn as crn
+import uscrn
 
-df = crn.get_data(2019, "hourly", n_jobs=6)  # pandas.DataFrame
+df = uscrn.get_data(2019, "hourly", n_jobs=6)  # pandas.DataFrame
 
-ds = crn.to_xarray(df)  # xarray.Dataset, with soil depth dimension if applicable (hourly, daily)
+ds = uscrn.to_xarray(df)  # xarray.Dataset, with soil depth dimension if applicable (hourly, daily)
 ```
 
 Both `df` (pandas) and `ds` (xarray) include dataset and variable metadata.
@@ -26,7 +26,7 @@ For `df`, these are in `df.attrs` and can be preserved by
 writing to Parquet with the PyArrow engine with pandas v2.1+.
 
 ```python
-df.to_parquet("crn_2019_hourly.parquet", engine="pyarrow")
+df.to_parquet("uscrn_2019_hourly.parquet", engine="pyarrow")
 ```
 
 Conda install example[^c]:

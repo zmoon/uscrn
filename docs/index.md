@@ -7,6 +7,7 @@
 :hidden:
 
 examples/daily.ipynb
+examples/stations.ipynb
 ```
 
 ```{toctree}
