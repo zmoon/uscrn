@@ -1,6 +1,6 @@
 # uscrn
 
-Easily load [U.S. Climate Reference Network data](https://www.ncei.noaa.gov/access/crn/).
+Easily load [U.S. Climate Reference Network](https://www.ncei.noaa.gov/access/crn/) (USCRN) data.
 
 [![Version on PyPI](https://img.shields.io/pypi/v/uscrn.svg)](https://pypi.org/project/uscrn/)
 [![CI status](https://github.com/zmoon/uscrn/actions/workflows/ci.yml/badge.svg)](https://github.com/zmoon/uscrn/actions/workflows/ci.yml)
