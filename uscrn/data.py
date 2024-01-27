@@ -472,7 +472,7 @@ def to_xarray(
     df: pd.DataFrame,
     which: Literal["subhourly", "hourly", "daily", "monthly"] | None = None,
 ) -> xr.Dataset:
-    """Convert to an xarray dataset.
+    """Convert to xarray representation.
 
     Soil variables will be combined, with a soil depth dimension added,
     if applicable (hourly, daily).
