@@ -107,17 +107,20 @@ def read_subhourly(fp, *, cat: bool = False) -> pd.DataFrame:
     from .attrs import get_col_info
 
     col_info = get_col_info("subhourly")
+    dtype = col_info.dtypes.copy()
+    for col in ["utc_date", "utc_time", "lst_date", "lst_time"]:
+        dtype[col] = str
     df = pd.read_csv(
         fp,
-        delim_whitespace=True,
+        sep=r"\s+",
         header=None,
         names=col_info.names,
-        dtype=col_info.dtypes,
-        parse_dates={"utc_time_": ["utc_date", "utc_time"], "lst_time_": ["lst_date", "lst_time"]},
-        date_format=r"%Y%m%d %H%M",
+        dtype=dtype,
         na_values=["-99999", "-9999"],
     )
-    df = df.rename(columns={"utc_time_": "utc_time", "lst_time_": "lst_time"})
+    df["utc_time"] = pd.to_datetime(df["utc_date"] + df["utc_time"], format=r"%Y%m%d%H%M")
+    df["lst_time"] = pd.to_datetime(df["lst_date"] + df["lst_time"], format=r"%Y%m%d%H%M")
+    df = df.drop(columns=["utc_date", "lst_date"])
 
     # Set soil moisture -99 to NaN
     sm_cols = df.columns[df.columns.str.startswith("soil_moisture_")]
@@ -154,17 +157,20 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
     from .attrs import get_col_info
 
     col_info = get_col_info("hourly")
+    dtype = col_info.dtypes.copy()
+    for col in ["utc_date", "utc_time", "lst_date", "lst_time"]:
+        dtype[col] = str
     df = pd.read_csv(
         fp,
-        delim_whitespace=True,
+        sep=r"\s+",
         header=None,
         names=col_info.names,
-        dtype=col_info.dtypes,
-        parse_dates={"utc_time_": ["utc_date", "utc_time"], "lst_time_": ["lst_date", "lst_time"]},
-        date_format=r"%Y%m%d %H%M",
+        dtype=dtype,
         na_values=["-99999", "-9999"],
     )
-    df = df.rename(columns={"utc_time_": "utc_time", "lst_time_": "lst_time"})
+    df["utc_time"] = pd.to_datetime(df["utc_date"] + df["utc_time"], format=r"%Y%m%d%H%M")
+    df["lst_time"] = pd.to_datetime(df["lst_date"] + df["lst_time"], format=r"%Y%m%d%H%M")
+    df = df.drop(columns=["utc_date", "lst_date"])
 
     # Set soil moisture -99 to NaN
     sm_cols = df.columns[df.columns.str.startswith("soil_moisture_")]
@@ -199,7 +205,7 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     col_info = get_col_info("daily")
     df = pd.read_csv(
         fp,
-        delim_whitespace=True,
+        sep=r"\s+",
         header=None,
         names=col_info.names,
         dtype=col_info.dtypes,
@@ -244,7 +250,7 @@ def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
     col_info = get_col_info("monthly")
     df = pd.read_csv(
         fp,
-        delim_whitespace=True,
+        sep=r"\s+",
         header=None,
         names=col_info.names,
         dtype=col_info.dtypes,
