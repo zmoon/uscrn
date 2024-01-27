@@ -109,7 +109,7 @@ def read_subhourly(fp, *, cat: bool = False) -> pd.DataFrame:
     col_info = get_col_info("subhourly")
     df = pd.read_csv(
         fp,
-        delim_whitespace=True,
+        sep=r"\s+",
         header=None,
         names=col_info.names,
         dtype=col_info.dtypes,
@@ -156,7 +156,7 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
     col_info = get_col_info("hourly")
     df = pd.read_csv(
         fp,
-        delim_whitespace=True,
+        sep=r"\s+",
         header=None,
         names=col_info.names,
         dtype=col_info.dtypes,
@@ -199,7 +199,7 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     col_info = get_col_info("daily")
     df = pd.read_csv(
         fp,
-        delim_whitespace=True,
+        sep=r"\s+",
         header=None,
         names=col_info.names,
         dtype=col_info.dtypes,
@@ -244,7 +244,7 @@ def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
     col_info = get_col_info("monthly")
     df = pd.read_csv(
         fp,
-        delim_whitespace=True,
+        sep=r"\s+",
         header=None,
         names=col_info.names,
         dtype=col_info.dtypes,
