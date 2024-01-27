@@ -25,6 +25,11 @@ def load_meta(*, cat: bool = False) -> pd.DataFrame:
     ----------
     cat
         Convert some columns to pandas categorical type.
+
+    See Also
+    --------
+    :doc:`/examples/stations`
+        Notebook example demonstrating using this function and examining its results.
     """
     url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/stations.tsv"
 
