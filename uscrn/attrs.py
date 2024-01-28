@@ -8,6 +8,7 @@ from typing import Any, Final, Literal, NamedTuple
 import numpy as np
 
 HERE = Path(__file__).parent
+_CACHE_DIR = HERE / "cache"
 
 
 def expand_str(s: str) -> list[str]:
@@ -289,7 +290,7 @@ def _get_docs(
     import pandas as pd
     import requests
 
-    from .util import retry
+    from .util import logger, retry
 
     validate_which(which)
 
@@ -309,6 +310,7 @@ def _get_docs(
             needs_update = True
 
         if needs_update:
+            logger.info(f"downloading {url} to {fp}")
             r = requests.get(url, timeout=10)
             r.raise_for_status()
             with open(fp, "w") as f:
@@ -319,7 +321,7 @@ def _get_docs(
 
         return text
 
-    cache_dir = HERE / "cache"
+    cache_dir = _CACHE_DIR
     cache_dir.mkdir(exist_ok=True)
 
     headers_txt = get(f"{base_url}/headers.txt", cache_dir / f"{which}_headers.txt")
