@@ -23,7 +23,11 @@ def retry(func):
         while True:
             try:
                 return func(*args, **kwargs)
-            except (urllib.error.URLError, requests.exceptions.ConnectionError):  # pragma: no cover
+            except (
+                urllib.error.URLError,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.ReadTimeout,
+            ):  # pragma: no cover
                 if perf_counter_ns() - t0 > max_time * 1_000_000_000:
                     raise
                 logger.info(
