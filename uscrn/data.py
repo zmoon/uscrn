@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from .util import retry
+from ._util import retry
 
 _GET_CAP: int | None = None
 """Restrict how many files to load, for testing purposes."""

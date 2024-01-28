@@ -290,7 +290,7 @@ def _get_docs(
     import pandas as pd
     import requests
 
-    from .util import logger, retry
+    from ._util import logger, retry
 
     validate_which(which)
 
