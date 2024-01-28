@@ -12,41 +12,10 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from .util import retry
+
 _GET_CAP: int | None = None
 """Restrict how many files to load, for testing purposes."""
-
-
-def retry(func):
-    """Retry a function on connection error.
-    Up to 60 s, with Fibonacci backoff (1, 1, 2, 3, ...).
-    """
-    import urllib
-    from functools import wraps
-
-    import requests
-
-    max_time = 60  # seconds
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        from time import perf_counter_ns, sleep
-
-        t0 = perf_counter_ns()
-        a, b = 1, 1
-        while True:
-            try:
-                return func(*args, **kwargs)
-            except (urllib.error.URLError, requests.exceptions.ConnectionError):  # pragma: no cover
-                if perf_counter_ns() - t0 > max_time * 1_000_000_000:
-                    raise
-                warnings.warn(  # TODO: remove or switch to logging?
-                    f"Retrying {func.__name__} in {a} s after connection error",
-                    stacklevel=2,
-                )
-                sleep(a)
-                a, b = b, a + b  # Fibonacci backoff
-
-    return wrapper
 
 
 @retry
@@ -405,19 +374,27 @@ def get_data(
 
     # Get available years from the main page
     # e.g. `>2000/<`
+    # TODO: could cache available years and files like the docs pages
     print("Discovering files...")
-    r = requests.get(f"{base_url}/", timeout=10)  # TODO: could cache this info like the docs
-    r.raise_for_status()
+
+    @retry
+    def get_main_list_page():
+        r = requests.get(f"{base_url}/", timeout=10)
+        r.raise_for_status()
+        return r.text
+
+    main_list_page = get_main_list_page()
+
     urls: list[str]
     if which == "monthly":
         # No year subdirectories
-        fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
+        fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", main_list_page)
         urls = [f"{base_url}/{fn}" for fn in fns]
     else:
         # Year subdirectories
         from multiprocessing.pool import ThreadPool
 
-        available_years: list[int] = [int(s) for s in re.findall(r">([0-9]{4})/?<", r.text)]
+        available_years: list[int] = [int(s) for s in re.findall(r">([0-9]{4})/?<", main_list_page)]
 
         years_: list[int]
         if isinstance(years, int):
@@ -429,6 +406,7 @@ def get_data(
             if len(years_) == 0:
                 raise ValueError("years should not be empty")
 
+        @retry
         def get_year_urls(year):
             if year not in available_years:
                 raise ValueError(

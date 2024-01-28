@@ -289,15 +289,18 @@ def _get_docs(
     import pandas as pd
     import requests
 
+    from .util import retry
+
     validate_which(which)
 
     stored_attrs = load_attrs()
     base_url = stored_attrs[which]["base_url"]
 
+    @retry
     def get(url: str, fp: Path) -> str:
         needs_update: bool
         if fp.is_file():
-            r = requests.head(url)
+            r = requests.head(url, timeout=10)
             r.raise_for_status()
             last_modified_url = pd.Timestamp(r.headers["Last-Modified"])
             last_modified_local = pd.Timestamp(fp.stat().st_mtime, unit="s", tz="UTC")
