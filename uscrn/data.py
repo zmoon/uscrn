@@ -36,7 +36,7 @@ def retry(func):
         while True:
             try:
                 return func(*args, **kwargs)
-            except (urllib.error.URLError, requests.exceptions.ConnectionError):
+            except (urllib.error.URLError, requests.exceptions.ConnectionError):  # pragma: no cover
                 if perf_counter_ns() - t0 > max_time * 1_000_000_000:
                     raise
                 warnings.warn(  # TODO: remove or switch to logging?
