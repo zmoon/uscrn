@@ -27,7 +27,7 @@ def retry(func):
                 urllib.error.URLError,
                 requests.exceptions.ConnectionError,
                 requests.exceptions.ReadTimeout,
-            ):  # pragma: no cover
+            ):
                 if perf_counter_ns() - t0 > max_time * 1_000_000_000:
                     raise
                 logger.info(
