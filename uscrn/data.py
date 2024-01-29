@@ -416,7 +416,7 @@ def get_data(
             # Get filenames from the year page
             # e.g. `>CRND0103-2020-TX_Palestine_6_WNW.txt<`
             url = f"{base_url}/{year}/"
-            r = requests.get(url, timeout=10)  # TODO: could cache this info like the docs
+            r = requests.get(url, timeout=10)
             r.raise_for_status()
             fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
             if not fns:  # pragma: no cover
