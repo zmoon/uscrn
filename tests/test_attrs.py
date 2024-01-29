@@ -1,12 +1,16 @@
 import inspect
+from contextlib import contextmanager
+from pathlib import Path
 from typing import get_args
 
 import pytest
 
+import uscrn
 from uscrn.attrs import (
     _ALL_WHICHS,
     DEFAULT_WHICH,
     WHICHS,
+    _get_docs,
     _map_dtype,
     expand_str,
     expand_strs,
@@ -92,6 +96,39 @@ def test_load_attrs():
                 "categories",
                 "xarray_only",
             }
+
+
+@contextmanager
+def change_cache_dir(p: Path):
+    default = uscrn.attrs._CACHE_DIR
+    uscrn.attrs._CACHE_DIR = p
+    try:
+        yield
+    finally:
+        uscrn.attrs._CACHE_DIR = default
+
+
+def test_get_docs_dl(tmp_path, caplog):
+    which = "daily"
+    d = tmp_path
+
+    p_headers = d / f"{which}_headers.txt"
+    p_readme = d / f"{which}_readme.txt"
+    assert not p_headers.exists()
+    assert not p_readme.exists()
+
+    with change_cache_dir(d), caplog.at_level("INFO"):
+        _get_docs(which)
+        assert "downloading" in caplog.text
+
+    assert p_headers.is_file()
+    assert p_readme.is_file()
+
+    # Now should load from disk instead of web
+    caplog.clear()
+    with change_cache_dir(d), caplog.at_level("INFO"):
+        _get_docs(which)
+        assert "downloading" not in caplog.text
 
 
 def test_load_col_info():
