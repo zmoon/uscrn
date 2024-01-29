@@ -12,7 +12,7 @@ def retry(func):
 
     import requests
 
-    max_time = 60  # seconds
+    max_time = 60_000_000_000  # 60 s (in ns)
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -28,7 +28,7 @@ def retry(func):
                 requests.exceptions.ConnectionError,
                 requests.exceptions.ReadTimeout,
             ):
-                if perf_counter_ns() - t0 > max_time * 1_000_000_000:
+                if perf_counter_ns() - t0 > max_time:  # pragma: no cover
                     raise
                 logger.info(
                     f"Retrying {func.__name__} in {a} s after connection error",
