@@ -12,10 +12,13 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from ._util import retry
+
 _GET_CAP: int | None = None
 """Restrict how many files to load, for testing purposes."""
 
 
+@retry
 def load_meta(*, cat: bool = False) -> pd.DataFrame:
     """Load the station metadata table.
 
@@ -98,6 +101,7 @@ def parse_url(url: str) -> _ParseRes:
     return parse_fp(urlsplit(url).path)
 
 
+@retry
 def read_subhourly(fp, *, cat: bool = False) -> pd.DataFrame:
     """Read a subhourly USCRN file.
 
@@ -148,6 +152,7 @@ def read_subhourly(fp, *, cat: bool = False) -> pd.DataFrame:
     return df
 
 
+@retry
 def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
     """Read an hourly USCRN file.
 
@@ -194,6 +199,7 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
     return df
 
 
+@retry
 def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     """Read a daily USCRN file.
 
@@ -236,6 +242,7 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     return df
 
 
+@retry
 def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
     """Read a monthly USCRN file.
 
@@ -367,19 +374,27 @@ def get_data(
 
     # Get available years from the main page
     # e.g. `>2000/<`
+    # TODO: could cache available years and files like the docs pages
     print("Discovering files...")
-    r = requests.get(f"{base_url}/")
-    r.raise_for_status()
+
+    @retry
+    def get_main_list_page():
+        r = requests.get(f"{base_url}/", timeout=10)
+        r.raise_for_status()
+        return r.text
+
+    main_list_page = get_main_list_page()
+
     urls: list[str]
     if which == "monthly":
         # No year subdirectories
-        fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
+        fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", main_list_page)
         urls = [f"{base_url}/{fn}" for fn in fns]
     else:
         # Year subdirectories
         from multiprocessing.pool import ThreadPool
 
-        available_years: list[int] = [int(s) for s in re.findall(r">([0-9]{4})/?<", r.text)]
+        available_years: list[int] = [int(s) for s in re.findall(r">([0-9]{4})/?<", main_list_page)]
 
         years_: list[int]
         if isinstance(years, int):
@@ -391,6 +406,7 @@ def get_data(
             if len(years_) == 0:
                 raise ValueError("years should not be empty")
 
+        @retry
         def get_year_urls(year):
             if year not in available_years:
                 raise ValueError(
@@ -400,7 +416,7 @@ def get_data(
             # Get filenames from the year page
             # e.g. `>CRND0103-2020-TX_Palestine_6_WNW.txt<`
             url = f"{base_url}/{year}/"
-            r = requests.get(url)
+            r = requests.get(url, timeout=10)
             r.raise_for_status()
             fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
             if not fns:  # pragma: no cover

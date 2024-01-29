@@ -33,6 +33,7 @@ jobs:
 
       - name: Test with pytest
         run: pytest --cov uscrn --cov-report xml --cov-report term
+        timeout-minutes: 10
 
       - name: Upload coverage to Codecov
         if: ${{ matrix.python-version == '3.11' }}
