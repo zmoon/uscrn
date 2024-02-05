@@ -1,6 +1,7 @@
 """
 Load USCRN data from NCEI.
 """
+
 from __future__ import annotations
 
 import datetime
