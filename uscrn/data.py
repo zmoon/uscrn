@@ -7,7 +7,7 @@ from __future__ import annotations
 import datetime
 import warnings
 from collections.abc import Iterable
-from typing import Literal, NamedTuple
+from typing import Any, Literal, NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -527,6 +527,113 @@ def get_data(
     )
 
     return df
+
+
+def get_nrt_data(
+    period: tuple[Any, Any],
+    which: Literal["hourly", "daily"] = "hourly",
+    # *,
+    # n_jobs: int | None = -2,
+    # cat: bool = False,
+) -> pd.DataFrame:
+    """Get USCRN NRT data.
+
+    Parameters
+    ----------
+    period
+        2-tuple expressing the (inclusive) time bounds of the period of interest (UTC).
+        Use ``None`` to indicate an open-ended bound.
+    which
+        Which dataset.
+    n_jobs
+        Number of parallel joblib jobs to use for loading the individual files.
+        The default is ``-2``, which means to use one less than joblib's detected max.
+    cat
+        Convert some columns to pandas categorical type.
+    """
+    import re
+    from urllib.parse import urlsplit
+
+    import requests
+
+    from .attrs import load_attrs
+
+    if which not in {"hourly", "daily"}:
+        raise ValueError(
+            f"Invalid dataset identifier: {which!r}. Valid identifiers are: ('hourly', 'daily')."
+        )
+
+    a, b = period
+    try:
+        if a is not None:
+            a = pd.to_datetime(a)
+        if b is not None:
+            b = pd.to_datetime(b)
+        assert (a is None or isinstance(a, pd.Timestamp)) and (
+            b is None or isinstance(b, pd.Timestamp)
+        )
+    except Exception as e:
+        raise TypeError(
+            "Expected period bounds to be None or coercible to pandas.Timestamp, "
+            f"got ({a!r}, {b!r})."
+        ) from e
+
+    if not isinstance(a, pd.Timestamp):
+        raise NotImplementedError("Unbounded left not implemented yet.")
+
+    stored_attrs = load_attrs()
+    base_url = stored_attrs[which]["base_url"]
+
+    # Get available years from the main page
+    # e.g. `>2024/<`
+    print("Discovering files...")
+
+    @retry
+    def get_main_list_page():
+        r = requests.get(f"{base_url}/updates/", timeout=10)
+        r.raise_for_status()
+        return r.text
+
+    main_list_page = get_main_list_page()
+
+    available_years: list[int] = [int(s) for s in re.findall(r">([0-9]{4})/?<", main_list_page)]
+
+    print(available_years)
+
+    @retry
+    def get_year_urls(year):
+        if year not in available_years:
+            raise ValueError(f"year {year} not in detected available USCRN years {available_years}")
+
+        # Get filenames from the year page
+        # e.g. `>CRN60H0203-202402082100.txt<`
+        url = f"{base_url}/updates/{year}/"
+        r = requests.get(url, timeout=10)
+        r.raise_for_status()
+        fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
+        if not fns:  # pragma: no cover
+            warnings.warn(f"no USCRN files found for year {year} (url {url})", stacklevel=2)
+
+        return (f"{base_url}/updates/{year}/{fn}" for fn in fns)
+
+    # Get URLs for years in period
+    urls = []
+    for year in available_years:
+        if year < a.year or (b is not None and year > b.year):
+            continue
+        urls.extend(get_year_urls(year))
+
+    # Remove files outside of period
+    urls_ = []
+    for url in urls:
+        parts = urlsplit(url)
+        path = parts.path
+        _, s = path.split("-")
+        t = pd.to_datetime(s, format=r"%Y%m%d%H%M.txt")
+        if a <= t <= b:
+            urls_.append(url)
+
+    print(urls_)
 
 
 def to_xarray(
