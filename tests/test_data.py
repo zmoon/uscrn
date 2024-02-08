@@ -109,6 +109,13 @@ def test_read(which, url):
         raise AssertionError
 
 
+def test_read_hourly_nrt():
+    url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/updates/2024/CRN60H0203-202402082100.txt"
+    df = uscrn.read_hourly_nrt(url)
+    assert df.wban.iloc[0] == "03047"
+    assert df.wban.iloc[-1] == "96409"
+
+
 def test_which_to_reader():
     from uscrn.attrs import WHICHS
 

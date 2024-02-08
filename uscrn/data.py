@@ -154,7 +154,7 @@ def read_subhourly(fp, *, cat: bool = False) -> pd.DataFrame:
 
 
 @retry
-def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
+def read_hourly(fp, *, cat: bool = False, **kwargs) -> pd.DataFrame:
     """Read an hourly USCRN file.
 
     For example:
@@ -164,6 +164,8 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
     ----------
     cat
         Convert some columns to pandas categorical type.
+    **kwargs
+        Additional keyword arguments to pass to :func:`pandas.read_csv`.
     """
     from .attrs import get_col_info
 
@@ -178,6 +180,7 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
         names=col_info.names,
         dtype=dtype,
         na_values=["-99999", "-9999"],
+        **kwargs,
     )
     df["utc_time"] = pd.to_datetime(df["utc_date"] + df["utc_time"], format=r"%Y%m%d%H%M")
     df["lst_time"] = pd.to_datetime(df["lst_date"] + df["lst_time"], format=r"%Y%m%d%H%M")
@@ -198,6 +201,24 @@ def read_hourly(fp, *, cat: bool = False) -> pd.DataFrame:
     df.attrs.update(which="hourly")
 
     return df
+
+
+def read_hourly_nrt(fp, *, cat: bool = False) -> pd.DataFrame:
+    """Read an hourly NRT USCRN file.
+
+    For example:
+    https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/updates/2024/CRN60H0203-202402082100.txt
+
+    Parameters
+    ----------
+    cat
+        Convert some columns to pandas categorical type.
+    """
+    # Two of the five header lines use `\r\r\n` ending instead of `\n`.
+    # The last data line has normal `\n` ending, but then the file ends with `\r\r\n\x03`.
+    # `\x03` is the end-of-text control character (^C).
+    # The 'c' engine does not support `skipfooter`.
+    return read_hourly(fp, cat=cat, skiprows=5, skipfooter=1, engine="python")
 
 
 @retry
