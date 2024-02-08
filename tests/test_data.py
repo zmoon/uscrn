@@ -116,6 +116,13 @@ def test_read_hourly_nrt():
     assert df.wban.iloc[-1] == "96409"
 
 
+def test_read_daily_nrt():
+    url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/updates/2024/CRND0103-202402072359.txt"
+    df = uscrn.read_daily_nrt(url)
+    assert df.wban.iloc[0] == "03047"
+    assert df.wban.iloc[-1] == "96409"
+
+
 def test_which_to_reader():
     from uscrn.attrs import WHICHS
 

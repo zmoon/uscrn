@@ -222,7 +222,7 @@ def read_hourly_nrt(fp, *, cat: bool = False) -> pd.DataFrame:
 
 
 @retry
-def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
+def read_daily(fp, *, cat: bool = False, **kwargs) -> pd.DataFrame:
     """Read a daily USCRN file.
 
     For example:
@@ -232,6 +232,8 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     ----------
     cat
         Convert some columns to pandas categorical type.
+    **kwargs
+        Additional keyword arguments to pass to :func:`pandas.read_csv`.
     """
     from .attrs import get_col_info
 
@@ -245,6 +247,7 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
         parse_dates=["lst_date"],
         date_format=r"%Y%m%d",
         na_values=["-99999", "-9999"],
+        **kwargs,
     )
 
     # Set soil moisture -99 to NaN
@@ -262,6 +265,21 @@ def read_daily(fp, *, cat: bool = False) -> pd.DataFrame:
     df.attrs.update(which="daily")
 
     return df
+
+
+def read_daily_nrt(fp, *, cat: bool = False) -> pd.DataFrame:
+    """Read a daily NRT USCRN file.
+
+    For example:
+    https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/updates/2024/CRND0103-202402072359.txt
+
+    Parameters
+    ----------
+    cat
+        Convert some columns to pandas categorical type.
+    """
+    # See notes in `read_hourly_nrt`.
+    return read_daily(fp, cat=cat, skiprows=5, skipfooter=1, engine="python")
 
 
 @retry
