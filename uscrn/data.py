@@ -379,6 +379,8 @@ def read(fp, *, cat: bool = False) -> pd.DataFrame:
     read_hourly
     read_monthly
     read_subhourly
+    read_hourly_nrt
+    read_daily_nrt
     """
     from .attrs import validate_which
 
