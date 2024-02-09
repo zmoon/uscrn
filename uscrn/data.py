@@ -364,6 +364,11 @@ _which_to_reader = {
     "monthly": read_monthly,
 }
 
+_which_to_reader_nrt = {
+    "hourly": read_hourly_nrt,
+    "daily": read_daily_nrt,
+}
+
 
 def read(fp, *, cat: bool = False) -> pd.DataFrame:
     """Read a USCRN file, auto-detecting which reader to use based on file name.
@@ -380,7 +385,10 @@ def read(fp, *, cat: bool = False) -> pd.DataFrame:
     res = parse_url(fp)
     validate_which(res.which)
 
-    return _which_to_reader[res.which](fp, cat=cat)
+    if res.nrt:
+        return _which_to_reader_nrt[res.which](fp, cat=cat)
+    else:
+        return _which_to_reader[res.which](fp, cat=cat)
 
 
 def get_data(

@@ -18,6 +18,8 @@ EXAMPLE_URL = {
     "hourly": "https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/2019/CRNH0203-2019-CO_Boulder_14_W.txt",
     "daily": "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/2019/CRND0103-2019-CO_Boulder_14_W.txt",
     "monthly": "https://www.ncei.noaa.gov/pub/data/uscrn/products/monthly01/CRNM0102-CO_Boulder_14_W.txt",
+    "hourly_nrt": "https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/updates/2024/CRN60H0203-202402082100.txt",
+    "daily_nrt": "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/updates/2024/CRND0103-202402072359.txt",
 }
 
 N = 2
@@ -105,22 +107,14 @@ def test_read(which, url):
         assert "soil_moisture_10_daily" not in ds
     elif which == "monthly":
         assert "depth" not in ds.dims
+    elif which == "hourly_nrt":
+        assert df.wban.iloc[0] == "03047"
+        assert df.wban.iloc[-1] == "96409"
+    elif which == "daily_nrt":
+        assert df.wban.iloc[0] == "03047"
+        assert df.wban.iloc[-1] == "96409"
     else:
         raise AssertionError
-
-
-def test_read_hourly_nrt():
-    url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/updates/2024/CRN60H0203-202402082100.txt"
-    df = uscrn.read_hourly_nrt(url)
-    assert df.wban.iloc[0] == "03047"
-    assert df.wban.iloc[-1] == "96409"
-
-
-def test_read_daily_nrt():
-    url = "https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/updates/2024/CRND0103-202402072359.txt"
-    df = uscrn.read_daily_nrt(url)
-    assert df.wban.iloc[0] == "03047"
-    assert df.wban.iloc[-1] == "96409"
 
 
 def test_which_to_reader():
@@ -131,12 +125,18 @@ def test_which_to_reader():
 
 @pytest.mark.parametrize("which, url", EXAMPLE_URL.items())
 def test_parse_url(which, url):
+    nrt = which.endswith("_nrt")
     res = parse_url(url)
-    assert url.endswith(res.name)
-    assert res.which == which
-    assert res.state == "CO"
-    assert res.location == "Boulder"
-    assert res.vector == "14 W"
+    assert res.nrt == nrt
+    if nrt:
+        assert res.time.year == 2024
+    else:
+        assert url.endswith(res.name)
+        assert res.which == which
+        assert res.state == "CO"
+        assert res.location == "Boulder"
+        assert res.vector == "14 W"
+        assert res.time is None
 
 
 def test_parse_fp_bad():
