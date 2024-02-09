@@ -532,9 +532,9 @@ def get_data(
 def get_nrt_data(
     period: tuple[Any, Any],
     which: Literal["hourly", "daily"] = "hourly",
-    # *,
-    # n_jobs: int | None = -2,
-    # cat: bool = False,
+    *,
+    n_jobs: int | None = -2,
+    cat: bool = False,
 ) -> pd.DataFrame:
     """Get USCRN NRT data.
 
@@ -545,6 +545,7 @@ def get_nrt_data(
         Use ``None`` to indicate an open-ended bound.
     which
         Which dataset.
+        Only hourly and daily are supported for NRT.
     n_jobs
         Number of parallel joblib jobs to use for loading the individual files.
         The default is ``-2``, which means to use one less than joblib's detected max.
@@ -555,10 +556,15 @@ def get_nrt_data(
     from urllib.parse import urlsplit
 
     import requests
+    from joblib import Parallel, delayed
 
-    from .attrs import load_attrs
+    from .attrs import get_col_info, load_attrs
 
-    if which not in {"hourly", "daily"}:
+    if which == "hourly":
+        read = read_hourly_nrt
+    elif which == "daily":
+        read = read_daily_nrt
+    else:
         raise ValueError(
             f"Invalid dataset identifier: {which!r}. Valid identifiers are: ('hourly', 'daily')."
         )
@@ -580,8 +586,12 @@ def get_nrt_data(
 
     if not isinstance(a, pd.Timestamp):
         raise NotImplementedError("Unbounded left not implemented yet.")
+    if b is None:
+        b = pd.Timestamp(year=3000, month=1, day=1)
 
     stored_attrs = load_attrs()
+    col_info = get_col_info(which)
+
     base_url = stored_attrs[which]["base_url"]
 
     # Get available years from the main page
@@ -597,8 +607,6 @@ def get_nrt_data(
     main_list_page = get_main_list_page()
 
     available_years: list[int] = [int(s) for s in re.findall(r">([0-9]{4})/?<", main_list_page)]
-
-    print(available_years)
 
     @retry
     def get_year_urls(year):
@@ -616,7 +624,7 @@ def get_nrt_data(
 
         return (f"{base_url}/updates/{year}/{fn}" for fn in fns)
 
-    # Get URLs for years in period
+    # Get available files for years in period
     urls = []
     for year in available_years:
         if year < a.year or (b is not None and year > b.year):
@@ -632,8 +640,45 @@ def get_nrt_data(
         t = pd.to_datetime(s, format=r"%Y%m%d%H%M.txt")
         if a <= t <= b:
             urls_.append(url)
+    urls = urls_
 
-    print(urls_)
+    # TODO: warn if period bounds are outside what is available?
+
+    print(f"Found {len(urls)} file(s) to load")
+    if len(urls) > 0:
+        print(urls[0])
+    if len(urls) > 2:
+        print("...")
+    if len(urls) > 1:
+        print(urls[-1])
+
+    print("Reading files...")
+    dfs = Parallel(n_jobs=n_jobs, verbose=10)(delayed(read)(url) for url in urls)
+
+    df = pd.concat(dfs, axis="index", ignore_index=True, copy=False)
+
+    # Category cols?
+    if cat:
+        for col, cats in col_info.categorical.items():
+            df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    title = f"U.S. Climate Reference Network (USCRN) | {which} | NRT"
+    s_a = "" if a is None else str(a)
+    s_b = "" if b is None else str(b)
+    s_period = f"{s_a}--{s_b}"
+    title += f" | {s_period}"
+
+    df.attrs.update(
+        which=which,
+        title=title,
+        created=str(now),
+        source=base_url,
+        attrs=col_info.attrs,
+        notes=col_info.notes,
+    )
+
+    return df
 
 
 def to_xarray(
