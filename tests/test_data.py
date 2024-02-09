@@ -110,9 +110,19 @@ def test_read(which, url):
     elif which == "hourly_nrt":
         assert df.wban.iloc[0] == "03047"
         assert df.wban.iloc[-1] == "96409"
+        #
+        assert "soil_moisture_10" in df
+        assert "depth" in ds.dims
+        assert {"soil_moisture", "soil_temp"} < set(ds.data_vars)
+        assert "soil_moisture_10" not in ds
     elif which == "daily_nrt":
         assert df.wban.iloc[0] == "03047"
         assert df.wban.iloc[-1] == "96409"
+        #
+        assert "soil_moisture_10_daily" in df
+        assert "depth" in ds.dims
+        assert {"soil_moisture_daily", "soil_temp_daily"} < set(ds.data_vars)
+        assert "soil_moisture_10_daily" not in ds
     else:
         raise AssertionError
 
