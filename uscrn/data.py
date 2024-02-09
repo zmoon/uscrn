@@ -60,10 +60,12 @@ def load_meta(*, cat: bool = False) -> pd.DataFrame:
 class _ParseRes(NamedTuple):
     fp: str
     which: str
+    nrt: bool
     group: str
-    state: str
-    location: str
-    vector: str
+    state: str | None
+    location: str | None
+    vector: str | None
+    time: datetime.datetime | None
 
 
 def parse_fp(fp: str) -> _ParseRes:
@@ -72,27 +74,54 @@ def parse_fp(fp: str) -> _ParseRes:
 
     p = Path(fp)
 
+    nrt: bool = False
+    state: str | None = None
+    location: str | None = None
+    vector: str | None = None
+    time: datetime.datetime | None = None
     if p.name.startswith("CRNS0"):
         which = "subhourly"
     elif p.name.startswith("CRNH0"):
         which = "hourly"
+    elif p.name.startswith("CRN60H"):
+        which = "hourly"
+        nrt = True
+        group, s_dt = p.stem.split("-")
+        time = datetime.datetime.strptime(s_dt, r"%Y%m%d%H%M")
     elif p.name.startswith("CRND0"):
         which = "daily"
+        try:
+            group, s_dt = p.stem.split("-")
+            time = datetime.datetime.strptime(s_dt, r"%Y%m%d%H%M")
+        except ValueError:
+            pass
+        else:
+            nrt = True
     elif p.name.startswith("CRNM0"):
         which = "monthly"
     else:
         raise ValueError(
-            "Unknown USCRN file type. Expected the name to start with `CRN{S,H,D,M}0`. "
+            "Unknown USCRN file type. Expected the name to start with `CRN{S,H,D,M}0` or `CRN60H`. "
             f"Got: {p.name!r}."
         )
 
-    parts = p.stem.split("_")
-    group = parts[0]
-    state = group.split("-")[-1]
-    location = " ".join(parts[1:-2])
-    vector = " ".join(parts[-2:])
+    if not nrt:
+        parts = p.stem.split("_")
+        group = parts[0]
+        state = group.split("-")[-1]
+        location = " ".join(parts[1:-2])
+        vector = " ".join(parts[-2:])
 
-    return _ParseRes(fp=fp, which=which, group=group, state=state, location=location, vector=vector)
+    return _ParseRes(
+        fp=fp,
+        which=which,
+        nrt=nrt,
+        group=group,
+        state=state,
+        location=location,
+        vector=vector,
+        time=time,
+    )
 
 
 def parse_url(url: str) -> _ParseRes:
