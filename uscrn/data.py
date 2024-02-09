@@ -58,7 +58,7 @@ def load_meta(*, cat: bool = False) -> pd.DataFrame:
 
 
 class _ParseRes(NamedTuple):
-    fp: str
+    name: str
     which: str
     nrt: bool
     group: str
@@ -113,7 +113,7 @@ def parse_fp(fp: str) -> _ParseRes:
         vector = " ".join(parts[-2:])
 
     return _ParseRes(
-        fp=fp,
+        name=p.name,
         which=which,
         nrt=nrt,
         group=group,

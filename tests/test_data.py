@@ -132,7 +132,7 @@ def test_which_to_reader():
 @pytest.mark.parametrize("which, url", EXAMPLE_URL.items())
 def test_parse_url(which, url):
     res = parse_url(url)
-    assert url.endswith(res.fp)
+    assert url.endswith(res.name)
     assert res.which == which
     assert res.state == "CO"
     assert res.location == "Boulder"
