@@ -194,11 +194,13 @@ def test_to_xarray_no_which_attr():
 
 @pytest.mark.parametrize("engine", ["pyarrow", "fastparquet"])
 def test_df_parquet_roundtrip(tmp_path, engine):
+    import fastparquet
+
     df = get_data(2019, which="daily", n_jobs=N, cat=True)
     assert df.attrs != {}
 
     fp = tmp_path / "test.parquet"
-    df.to_parquet(fp, index=False)
+    df.to_parquet(fp, index=False, engine="pyarrow")
     df2 = pd.read_parquet(fp, engine=engine)
 
     assert df.equals(df2), "data same"
@@ -207,7 +209,7 @@ def test_df_parquet_roundtrip(tmp_path, engine):
         assert df2.attrs == {}, "no preservation before pandas 2.1"
     else:
         assert df.attrs is not df2.attrs
-        if engine == "fastparquet":
-            assert df2.attrs == {}
+        if engine == "fastparquet" and Version(fastparquet.__version__) < Version("2024.2.0"):
+            assert df2.attrs == {}, "no preservation before fastparquet 2024.2.0"
         else:
-            assert df.attrs == df2.attrs
+            assert df.attrs == df2.attrs, "attrs read in with pyarrow, or fastparquet >=2024.2.0"
