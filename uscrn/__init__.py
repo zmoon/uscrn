@@ -61,6 +61,7 @@ __version__ = "0.1.0b4"
 from .attrs import load_attrs
 from .data import (
     get_data,
+    get_nrt_data,
     load_meta,
     read,
     read_daily,
@@ -82,6 +83,7 @@ del load_attrs
 __all__ = [
     "ATTRS",
     "get_data",
+    "get_nrt_data",
     "load_meta",
     "read",
     "read_daily",

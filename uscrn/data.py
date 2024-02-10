@@ -582,6 +582,7 @@ def get_nrt_data(
     period
         2-tuple expressing the (inclusive) time bounds of the period of interest (UTC).
         Use ``None`` to indicate an open-ended bound.
+        Timestamps without timezone are assumed to be in UTC.
     which
         Which dataset.
         Only hourly and daily are supported for NRT.
@@ -608,12 +609,19 @@ def get_nrt_data(
             f"Invalid dataset identifier: {which!r}. Valid identifiers are: ('hourly', 'daily')."
         )
 
+    def to_utc_naive(ts: pd.Timestamp) -> pd.Timestamp:
+        if ts.tz is None:
+            warnings.warn(f"Timestamp {ts} has no timezone, assuming UTC.")
+            return ts
+        else:
+            return ts.tz_convert("UTC").tz_localize(None)
+
     a, b = period
     try:
         if a is not None:
-            a = pd.to_datetime(a)
+            a = to_utc_naive(pd.to_datetime(a))
         if b is not None:
-            b = pd.to_datetime(b)
+            b = to_utc_naive(pd.to_datetime(b))
         assert (a is None or isinstance(a, pd.Timestamp)) and (
             b is None or isinstance(b, pd.Timestamp)
         )
@@ -704,7 +712,7 @@ def get_nrt_data(
     now = datetime.datetime.now(datetime.timezone.utc)
     title = f"U.S. Climate Reference Network (USCRN) | {which} | NRT"
     s_a = "" if a is None else str(a)
-    s_b = "" if b is None else str(b)
+    s_b = "" if b is None or b.year == 3000 else str(b)
     s_period = f"{s_a}--{s_b}"
     title += f" | {s_period}"
 
