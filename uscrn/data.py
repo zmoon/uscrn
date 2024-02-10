@@ -401,7 +401,7 @@ def get_data(
     cat: bool = False,
     dropna: bool = False,
 ) -> pd.DataFrame:
-    """Get USCRN data.
+    """Get USCRN archive data.
 
     * Home page: https://www.ncei.noaa.gov/access/crn/
     * Info: https://www.ncei.noaa.gov/access/crn/qcdatasets.html
@@ -585,12 +585,17 @@ def get_nrt_data(
         Timestamps without timezone are assumed to be in UTC.
     which
         Which dataset.
-        Only hourly and daily are supported for NRT.
+        Only hourly and daily are supported for NRT (near-real-time).
     n_jobs
         Number of parallel joblib jobs to use for loading the individual files.
         The default is ``-2``, which means to use one less than joblib's detected max.
     cat
         Convert some columns to pandas categorical type.
+
+    See Also
+    --------
+    :doc:`/examples/nrt`
+        Notebook example demonstrating using this function to get recent data.
     """
     import re
     from urllib.parse import urlsplit

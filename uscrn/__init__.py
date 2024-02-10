@@ -17,6 +17,7 @@ variable attributes such as long name and units are stored in :attr:`~pandas.Dat
    :toctree: api/
 
    uscrn.get_data
+   uscrn.get_nrt_data
 
 Convert to xarray
 -----------------
@@ -40,7 +41,9 @@ Read data from a single file and return as a :class:`pandas.DataFrame`.
 
    uscrn.read
    uscrn.read_daily
+   uscrn.read_daily_nrt
    uscrn.read_hourly
+   uscrn.read_hourly_nrt
    uscrn.read_monthly
    uscrn.read_subhourly
 
