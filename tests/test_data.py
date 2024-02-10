@@ -192,7 +192,6 @@ def test_to_xarray_no_which_attr():
         to_xarray(pd.DataFrame())
 
 
-# @pytest.mark.parametrize("engine", ["pyarrow", "fastparquet"])
 def test_df_parquet_roundtrip(tmp_path):
     import fastparquet
 
@@ -200,36 +199,48 @@ def test_df_parquet_roundtrip(tmp_path):
     assert df.attrs != {}
 
     # Write with both engines
-    fp_pa = tmp_path / "test_pa.parquet"
-    df.to_parquet(fp_pa, index=False, engine="pyarrow")
-    fp_fp = tmp_path / "test_fp.parquet"
-    df.to_parquet(fp_fp, index=False, engine="fastparquet")
+    p_pa = tmp_path / "test_pa.parquet"
+    df.to_parquet(p_pa, index=False, engine="pyarrow")
+    p_fp = tmp_path / "test_fp.parquet"
+    df.to_parquet(p_fp, index=False, engine="fastparquet")
 
     # Read with both engines
-    df_pa_pa = pd.read_parquet(fp_pa, engine="pyarrow")
-    df_pa_fp = pd.read_parquet(fp_pa, engine="fastparquet")
-    df_fp_pa = pd.read_parquet(fp_fp, engine="pyarrow")
-    df_fp_fp = pd.read_parquet(fp_fp, engine="fastparquet")
+    cases = {
+        "pa-pa": pd.read_parquet(p_pa, engine="pyarrow"),
+        "pa-fp": pd.read_parquet(p_pa, engine="fastparquet"),
+        "fp-pa": pd.read_parquet(p_fp, engine="pyarrow"),
+        "fp-fp": pd.read_parquet(p_fp, engine="fastparquet"),
+    }
 
     # For all cases, the data should be the same
-    # for df_ in [df_pa_pa, df_pa_fp, df_fp_pa, df_fp_fp]:
-    for df_ in [df_pa_pa, df_pa_fp, df_fp_fp]:
-        assert df.equals(df_), "data same"
-
-    # But for some reason it isn't for this one
-    # TODO: investigate what is different
-    assert not df_fp_pa.equals(df)
+    for case, df_ in cases.items():
+        assert df_.index.equals(df.index), f"index same for {case}"
+        assert df_.columns.equals(df.columns), f"columns same for {case}"
+        if case == "fp-pa":
+            # Categorical type not preserved, but data same
+            assert not df_.equals(df), f"equals fails for {case}"
+            diff = df.compare(df_)
+            assert diff.empty, f"data same for {case}"
+            assert not isinstance(
+                df_.sur_temp_daily_type.dtype, pd.CategoricalDtype
+            ), f"cat dtype not rt for {case}"
+        else:
+            assert df_.equals(df), f"data same for {case}"
+            assert isinstance(
+                df_.sur_temp_daily_type.dtype, pd.CategoricalDtype
+            ), f"cat dtype rt for {case}"
 
     if Version(pd.__version__) < Version("2.1"):
-        for df_ in [df_pa_pa, df_pa_fp, df_fp_pa, df_fp_fp]:
-            assert df_.attrs == {}, "no preservation before pandas 2.1"
-
-    else:
-        # With fastparquet involved, fastparquet version must be v2024.2.0 or later
-        for df_ in [df_pa_fp, df_fp_pa, df_fp_fp]:
-            if Version(fastparquet.__version__) < Version("2024.2.0"):
-                assert df_.attrs == {}, "no attrs roundtrip before fastparquet 2024.2.0"
-            else:
-                assert df.attrs == df_.attrs, "attrs roundtrip"
-
-        assert df_pa_pa.attrs == df.attrs, "attrs roundtrip with pyarrow"
+        for case, df_ in cases.items():
+            assert df_.attrs == {}, f"no preservation before pandas 2.1, case {case}"
+    else:  # pandas 2.1+
+        for case, df_ in cases.items():
+            if case == "pa-pa":
+                assert df.attrs == df_.attrs, f"attrs roundtrip for {case}"
+            else:  # fastparquet involved
+                if Version(fastparquet.__version__) < Version("2024.2.0"):
+                    assert (
+                        df_.attrs == {}
+                    ), f"no attrs roundtrip before fastparquet 2024.2.0, case {case}"
+                else:
+                    assert df_.attrs == df.attrs, f"attrs roundtrip for {case}"
