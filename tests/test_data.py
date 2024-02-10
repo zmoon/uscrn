@@ -91,6 +91,9 @@ def test_read(which, url):
 
     ds = to_xarray(df)
 
+    assert {"long_name", "units"} <= ds.latitude.attrs.keys()
+    assert {"long_name", "units"} <= ds.longitude.attrs.keys()
+
     if which == "subhourly":
         assert "depth" not in ds.dims
     elif which == "hourly":
