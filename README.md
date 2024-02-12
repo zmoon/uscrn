@@ -23,7 +23,8 @@ ds = uscrn.to_xarray(df)  # xarray.Dataset, with soil depth dimension if applica
 
 Both `df` (pandas) and `ds` (xarray) include dataset and variable metadata.
 For `df`, these are in `df.attrs` and can be preserved by
-writing to Parquet with the PyArrow engine with pandas v2.1+.
+writing to Parquet with the PyArrow engine[^d] with
+[pandas v2.1+](https://pandas.pydata.org/docs/whatsnew/v2.1.0.html#other-enhancements).
 
 ```python
 df.to_parquet("uscrn_2019_hourly.parquet", engine="pyarrow")
@@ -40,3 +41,4 @@ pip install --no-deps uscrn
 [^a]: Use `uscrn.load_meta()` to load the site metadata table.
 [^b]: Not counting the `import` statement...
 [^c]: `uscrn` is not yet on conda-forge.
+[^d]: Or the fastparquet engine with [fastparquet v2024.2.0+](https://github.com/dask/fastparquet/commit/9d7ee90e38103fef3dd1bd2f5eb0654b8bd3fdff).
