@@ -577,6 +577,14 @@ def get_nrt_data(
 ) -> pd.DataFrame:
     """Get USCRN NRT data.
 
+    These are the "update" files sent out through the GTS weather wire system.
+
+    Unlike the archive files,
+    where sites are in separate files,
+    these files contain data from all sites in one file,
+    reducing the amount of data that needs to be downloaded and processed
+    to get the most recent data.
+
     Parameters
     ----------
     period
@@ -591,6 +599,37 @@ def get_nrt_data(
         The default is ``-2``, which means to use one less than joblib's detected max.
     cat
         Convert some columns to pandas categorical type.
+
+    Notes
+    -----
+    In the NRT files files, the time in the file name is
+
+    - for daily, the end of the day (23:59).
+      The time in the file left-labels the period (i.e., 00:00 of the same day).
+
+    - for hourly, the next hour (e.g., 19:00)
+      The time in the file left-labels the hourly periods.
+      In our example with 19:00 from the file name,
+      time in the file should be mostly 18:00,
+      with 17:00 or 16:00, two or three hours behind the file name time,
+      also possible for some sites, depending on the file).
+      For example, see
+      `2024020919 <https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/updates/2024/CRN60H0203-202402091900.txt>`__,
+      which has mostly 18:00 data, but also some 17:00 and 16:00 data.
+
+    That is, the hourly files contain data *received* during the previous hour.
+
+    Some info from Howard Diamond (somewhat paraphrased):
+
+        The stations transmit data once an hour,
+        but because the times when they transmit rotate around the hour,
+        some stations transmit so early in the hour
+        that they are current only through the previous hour.
+        Therefore, some of these update files will have data from previous hours,
+        in addition to the most recent hour, as a matter of normal course.
+        Stations that are two hours behind may have had a missing transmission
+        and are an hour further behind.
+        Stations transmit blocks of two hours at a time.
 
     See Also
     --------
