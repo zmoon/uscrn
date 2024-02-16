@@ -569,7 +569,7 @@ def get_data(
 
 
 def get_nrt_data(
-    period: tuple[Any, Any],
+    period: Any | tuple[Any, Any],
     which: Literal["hourly", "daily"] = "hourly",
     *,
     n_jobs: int | None = -2,
@@ -660,25 +660,40 @@ def get_nrt_data(
         else:
             return ts.tz_convert("UTC").tz_localize(None)
 
-    a, b = period
-    try:
-        if a is not None:
-            a = to_utc_naive(pd.to_datetime(a))
-        if b is not None:
-            b = to_utc_naive(pd.to_datetime(b))
-        assert (a is None or isinstance(a, pd.Timestamp)) and (
-            b is None or isinstance(b, pd.Timestamp)
-        )
-    except Exception as e:
-        raise TypeError(
-            "Expected period bounds to be None or coercible to pandas.Timestamp, "
-            f"got ({a!r}, {b!r})."
-        ) from e
+    def maybe_to_utc_native_ts(x) -> pd.Timestamp | int | None:
+        if x is None:
+            return x
+        elif np.issubdtype(type(x), np.integer):
+            return int(x)
+        else:
+            try:
+                new = pd.to_datetime(x)
+                assert isinstance(new, pd.Timestamp)
+            except Exception as e:
+                raise TypeError(
+                    "Expected period bound element to be "
+                    "None or integer or coercible to pandas.Timestamp, "
+                    f"got {x!r}."
+                ) from e
+            return to_utc_naive(new)
 
-    if not isinstance(a, pd.Timestamp):
-        raise NotImplementedError("Unbounded left not implemented yet.")
-    if b is None:
-        b = pd.Timestamp(year=3000, month=1, day=1)
+    a: pd.Timestamp | int | None
+    b: pd.Timestamp | int | None
+    try:
+        a, b = period
+    except TypeError:  # can't unpack
+        # Assume single selection
+        a = b = period
+
+    a = maybe_to_utc_native_ts(a)
+    b = maybe_to_utc_native_ts(b)
+
+    # For single selection, tweak time for file filtering
+    if a is b and isinstance(a, pd.Timestamp):
+        if which == "hourly":
+            a = b = a.ceil("h")
+        elif which == "daily":
+            a = b = a.floor("d").replace(hour=23, minute=59)
 
     stored_attrs = load_attrs()
     col_info = get_col_info(which)
@@ -715,21 +730,57 @@ def get_nrt_data(
 
         return (f"{base_url}/updates/{year}/{fn}" for fn in fns)
 
+    first = pd.Timestamp(year=available_years[0], month=1, day=1, tz="UTC")
+    now = pd.Timestamp.now("UTC")
+
+    def int_to_ts_est(x: int) -> pd.Timestamp:
+        if x < 0:
+            if which == "hourly":
+                return now.floor("h") + pd.Timedelta(hours=x)
+            elif which == "daily":
+                return now.floor("d") + pd.Timedelta(days=x)
+        else:  # positive
+            if which == "hourly":
+                return first + pd.Timedelta(hours=x)
+            elif which == "daily":
+                return first + pd.Timedelta(days=x)
+
     # Get available files for years in period
     urls = []
     for year in available_years:
-        if year < a.year or (b is not None and year > b.year):
-            continue
+        if a is not None:
+            if isinstance(a, int):
+                if year < int_to_ts_est(a).year:
+                    continue
+            else:
+                if year < a.year:
+                    continue
+        if b is not None:
+            if isinstance(b, int):
+                if year > int_to_ts_est(b).year:
+                    continue
+            else:
+                if year > b.year:
+                    continue
+
         urls.extend(get_year_urls(year))
 
     # Remove files outside of period
     urls_ = []
-    for url in urls:
-        parts = urlsplit(url)
-        path = parts.path
-        _, s = path.split("-")
-        t = pd.to_datetime(s, format=r"%Y%m%d%H%M.txt")
-        if a <= t <= b:
+    if a is b and isinstance(a, int):
+        urls_ = [urls[a]]
+    elif (isinstance(a, int) or a is None) and (isinstance(b, int) or b is None):
+        urls_ = urls[a:b]
+    else:
+        for url in urls:
+            parts = urlsplit(url)
+            path = parts.path
+            _, s = path.split("-")
+            t = pd.to_datetime(s, format=r"%Y%m%d%H%M.txt")
+            if a is not None and t < a:
+                continue
+            if b is not None and t > b:
+                continue
             urls_.append(url)
     urls = urls_
 
@@ -753,17 +804,16 @@ def get_nrt_data(
         for col, cats in col_info.categorical.items():
             df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
-    now = datetime.datetime.now(datetime.timezone.utc)
     title = f"U.S. Climate Reference Network (USCRN) | {which} | NRT"
-    s_a = "" if a is None else str(a)
-    s_b = "" if b is None or b.year == 3000 else str(b)
-    s_period = f"{s_a}--{s_b}"
-    title += f" | {s_period}"
+    # s_a = "" if a is None else str(a)
+    # s_b = "" if b is None or b.year == 3000 else str(b)
+    # s_period = f"{s_a}--{s_b}"  # FIXME
+    # title += f" | {s_period}"
 
     df.attrs.update(
         which=which,
         title=title,
-        created=str(now),
+        created=str(now.to_pydatetime()),
         source=base_url,
         attrs=col_info.attrs,
         notes=col_info.notes,
