@@ -579,7 +579,7 @@ def get_nrt_data(
 
     These are the "update" files sent out through the GTS weather wire system.
 
-    Unlike the archive files,
+    Unlike the archive files (:func:`get_data`),
     where sites are in separate files,
     these files contain data from all sites in one file,
     reducing the amount of data that needs to be downloaded and processed
