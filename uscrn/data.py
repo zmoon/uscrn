@@ -681,7 +681,7 @@ def get_nrt_data(
     b: pd.Timestamp | int | None
     try:
         a, b = period
-    except TypeError:  # can't unpack
+    except (TypeError, ValueError):  # can't unpack
         # Assume single selection
         a = b = period
 
