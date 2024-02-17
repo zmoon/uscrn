@@ -714,10 +714,10 @@ def get_nrt_data(
 
     a: pd.Timestamp | int | None
     b: pd.Timestamp | int | None
-    try:
+    if isinstance(period, tuple):
         a, b = period
-    except (TypeError, ValueError):  # can't unpack
-        # Assume single selection
+    else:
+        # Single selection
         a = b = period
 
     a = maybe_to_utc_native_ts(a)
