@@ -668,6 +668,8 @@ def get_nrt_data(
     --------
     :doc:`/examples/nrt`
         Notebook example demonstrating using this function to get recent data.
+    :func:`get_data`
+        To load a year or more of the archive data instead.
     """
     import re
     from urllib.parse import urlsplit
