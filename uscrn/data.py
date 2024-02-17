@@ -588,17 +588,48 @@ def get_nrt_data(
     Parameters
     ----------
     period
-        2-tuple expressing the (inclusive) time bounds of the period of interest (UTC).
-        Use ``None`` to indicate an open-ended bound.
+        Single element
+        or 2-tuple expressing the (inclusive) time bounds of the period of interest (UTC).
+        Elements can be integers (used to slice the list of available files)
+        or something coercible to a :class:`pandas.Timestamp`
+        (e.g. :class:`str`, :class:`datetime.datetime`, :class:`pandas.Timestamp`).
+        Timestamps are treated as inclusive bounds,
+        while integers follow normal Python slicing rules (upper bound is exclusive).
+        Timestamps correspond to the file name time (see examples and notes below).
+        Use ``None`` to indicate an open-ended bound;
+        ``period=None`` means to load all available files.
         Timestamps without timezone are assumed to be in UTC.
     which
         Which dataset.
-        Only hourly and daily are supported for NRT (near-real-time).
+        Only hourly and daily are available.
     n_jobs
         Number of parallel joblib jobs to use for loading the individual files.
         The default is to use ``min(joblib.cpu_count() - 1, num_files)``.
     cat
         Convert some columns to pandas categorical type.
+
+    Examples
+    --------
+    Latest available hourly data:
+
+    >>> df = uscrn.get_nrt_data(-1, "hourly")
+
+    Last 12 hourly files:
+
+    >>> df = uscrn.get_nrt_data((-12, None), "hourly")
+
+    Get the 2023-08-31 17 UTC hourly file
+    (majority of the data is for the 16 UTC hour):
+
+    >>> df = uscrn.get_nrt_data("2023-08-31 17", "hourly")
+
+    All the files from that day:
+
+    >>> df = uscrn.get_nrt_data(("2023-08-31 00", "2023-08-31 23"), "hourly")
+
+    Latest available daily data:
+
+    >>> df = uscrn.get_nrt_data(-1, "daily")
 
     Notes
     -----
@@ -619,7 +650,9 @@ def get_nrt_data(
 
     That is, the hourly files contain data *received* during the previous hour.
 
-    Some info from Howard Diamond (somewhat paraphrased):
+    Some info from
+    `Howard Diamond <https://www.arl.noaa.gov/about/staff-directory-2/howard-diamond/>`__
+    (somewhat paraphrased):
 
         The stations transmit data once an hour,
         but because the times when they transmit rotate around the hour,
