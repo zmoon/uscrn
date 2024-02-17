@@ -823,6 +823,9 @@ def get_nrt_data(
 
     # TODO: warn if period bounds are outside what is available?
 
+    if len(urls) == 0:
+        raise RuntimeError(f"No files identified for the specified period {period!r}")
+
     print(f"Found {len(urls)} file(s) to load")
     if len(urls) > 0:
         print(urls[0])
