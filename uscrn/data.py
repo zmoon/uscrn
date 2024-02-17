@@ -572,7 +572,7 @@ def get_nrt_data(
     period: Any | tuple[Any, Any],
     which: Literal["hourly", "daily"] = "hourly",
     *,
-    n_jobs: int | None = -2,
+    n_jobs: int | None = None,
     cat: bool = False,
 ) -> pd.DataFrame:
     """Get USCRN NRT data.
@@ -596,7 +596,7 @@ def get_nrt_data(
         Only hourly and daily are supported for NRT (near-real-time).
     n_jobs
         Number of parallel joblib jobs to use for loading the individual files.
-        The default is ``-2``, which means to use one less than joblib's detected max.
+        The default is to use ``min(joblib.cpu_count() - 1, num_files)``.
     cat
         Convert some columns to pandas categorical type.
 
@@ -640,7 +640,7 @@ def get_nrt_data(
     from urllib.parse import urlsplit
 
     import requests
-    from joblib import Parallel, delayed
+    from joblib import Parallel, cpu_count, delayed
 
     from .attrs import get_col_info, load_attrs
 
@@ -746,6 +746,7 @@ def get_nrt_data(
                 return first + pd.Timedelta(days=x)
 
     # Get available files for years in period
+    print("  Looking for files in these years")
     urls = []
     for year in available_years:
         if a is not None:
@@ -763,6 +764,7 @@ def get_nrt_data(
                 if year > b.year:
                     continue
 
+        print(f"  - {year}")
         urls.extend(get_year_urls(year))
 
     # Remove files outside of period
@@ -795,6 +797,8 @@ def get_nrt_data(
         print(urls[-1])
 
     print("Reading files...")
+    if n_jobs is None:
+        n_jobs = min(cpu_count() - 1, len(urls))
     dfs = Parallel(n_jobs=n_jobs, verbose=10)(delayed(read)(url) for url in urls)
 
     df = pd.concat(dfs, axis="index", ignore_index=True, copy=False)
