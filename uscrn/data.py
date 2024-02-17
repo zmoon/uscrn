@@ -407,11 +407,17 @@ def get_data(
     * Info: https://www.ncei.noaa.gov/access/crn/qcdatasets.html
     * Data: https://www.ncei.noaa.gov/pub/data/uscrn/products/
 
-    Variable and dataset metadata are included in the ``.attrs`` dict.
-    These will be preserved if you have pandas v2.1+
-    and save the dataframe to Parquet format with the PyArrow engine.
+    Sites are stored in separate files for these datasets.
+    If you want to quickly get data for all sites
+    for a short, recent period of time, consider using :func:`get_nrt_data`.
 
-    >>> df.to_parquet('crn.parquet', engine='pyarrow')
+    .. note::
+
+       Variable and dataset metadata are included in the ``.attrs`` dict.
+       These can be preserved if you have pandas v2.1+
+       and save the dataframe to Parquet format with the PyArrow engine. ::
+
+           df.to_parquet('crn.parquet', engine='pyarrow')
 
     Parameters
     ----------
@@ -584,6 +590,17 @@ def get_nrt_data(
     these files contain data from all sites in one file,
     reducing the amount of data that needs to be downloaded and processed
     to get the most recent data.
+
+    2020-10-06 20 UTC is the first available hourly file,
+    while 2020-10-06 is the first available daily file.
+
+    .. note::
+
+       Variable and dataset metadata are included in the ``.attrs`` dict.
+       These can be preserved if you have pandas v2.1+
+       and save the dataframe to Parquet format with the PyArrow engine. ::
+
+           df.to_parquet('crn.parquet', engine='pyarrow')
 
     Parameters
     ----------
