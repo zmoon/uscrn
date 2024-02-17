@@ -59,7 +59,7 @@ Load site metadata as a :class:`pandas.DataFrame`.
    uscrn.load_meta
 """
 
-__version__ = "0.1.0b4"
+__version__ = "0.1.0"
 
 from .attrs import load_attrs
 from .data import (

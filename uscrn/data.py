@@ -979,7 +979,7 @@ def to_xarray(
                 i = inds[0]
                 return x[i]
 
-        return xr.apply_ufunc(func, da, input_core_dims=[["time"]], vectorize=True)
+        return xr.apply_ufunc(func, da, input_core_dims=[["time"]], vectorize=True, keep_attrs=True)
 
     lat0 = first(ds["latitude"])
     lon0 = first(ds["longitude"])
