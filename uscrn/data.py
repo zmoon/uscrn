@@ -233,7 +233,7 @@ def read_hourly(fp, *, cat: bool = False, **kwargs) -> pd.DataFrame:
 
 
 def read_hourly_nrt(fp, *, cat: bool = False) -> pd.DataFrame:
-    """Read an hourly NRT USCRN file.
+    """Read an hourly USCRN "update" file.
 
     For example:
     https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/updates/2024/CRN60H0203-202402082100.txt
@@ -297,7 +297,7 @@ def read_daily(fp, *, cat: bool = False, **kwargs) -> pd.DataFrame:
 
 
 def read_daily_nrt(fp, *, cat: bool = False) -> pd.DataFrame:
-    """Read a daily NRT USCRN file.
+    """Read a daily USCRN "update" file.
 
     For example:
     https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/updates/2024/CRND0103-202402072359.txt
@@ -575,7 +575,7 @@ def get_nrt_data(
     n_jobs: int | None = None,
     cat: bool = False,
 ) -> pd.DataFrame:
-    """Get USCRN NRT data.
+    """Get USCRN near-real-time data.
 
     These are the "update" files sent out through the GTS weather wire system.
 
