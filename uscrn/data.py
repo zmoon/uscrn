@@ -627,6 +627,8 @@ def get_nrt_data(
 
     Examples
     --------
+    >>> import uscrn
+
     Latest available hourly data:
 
     >>> df = uscrn.get_nrt_data(-1, "hourly")

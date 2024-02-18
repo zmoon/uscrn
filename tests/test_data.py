@@ -8,7 +8,16 @@ import xarray as xr
 from packaging.version import Version
 
 import uscrn
-from uscrn.data import _which_to_reader, get_data, load_meta, parse_fp, parse_url, read, to_xarray
+from uscrn.data import (
+    _which_to_reader,
+    get_data,
+    get_nrt_data,
+    load_meta,
+    parse_fp,
+    parse_url,
+    read,
+    to_xarray,
+)
 
 HERE = Path(__file__).parent
 DATA = HERE / "data"
@@ -209,6 +218,61 @@ def test_get_years_default():
     unique_years = df["lst_date"].dt.year.unique()
     assert unique_years.size == 1
     assert unique_years[0] == 2000
+
+
+def test_get_nrt_m1_hourly():
+    now = pd.Timestamp.now("UTC").tz_localize(None)
+    df = get_nrt_data(-1, "hourly")
+
+    time_counts = df["utc_time"].value_counts()
+
+    if now.minute >= 47:
+        # Probably new file has been uploaded, but there is some variation in upload times
+        # https://www.ncei.noaa.gov/pub/data/uscrn/products/hourly02/updates/2024/
+        dh = 1
+    else:
+        dh = 2
+    try:
+        assert time_counts.index[0] == now.floor("h") - pd.Timedelta(hours=dh)
+    except AssertionError:
+        assert time_counts.index[0] == now.floor("h") - pd.Timedelta(hours=dh + 1)
+        warnings.warn("Seems new hourly NRT file hasn't been uploaded yet")
+
+
+def test_get_nrt_m1_daily():
+    now = pd.Timestamp.now("EST").tz_localize(None)
+    df = get_nrt_data(-1, "daily")
+
+    unique_times = df["lst_date"].unique()
+    assert len(unique_times) == 1
+    time = unique_times[0]
+
+    if (now.hour, now.minute) >= (0, 40):
+        # Probably yesterday file has been uploaded
+        # https://www.ncei.noaa.gov/pub/data/uscrn/products/daily01/updates/2024/
+        dd = 1
+    else:
+        dd = 2
+    try:
+        assert time == now.floor("d") - pd.Timedelta(days=dd)
+    except AssertionError:
+        assert time == now.floor("d") - pd.Timedelta(days=dd + 1)
+        warnings.warn("Seems new daily NRT file hasn't been uploaded yet")
+
+
+def test_get_nrt_mslice():
+    df = get_nrt_data((-2, None), "daily")
+    assert df.lst_date.nunique() == 2
+
+
+def test_get_nrt_ts_hourly():
+    with pytest.warns(
+        UserWarning, match="Timestamp 2023-08-31 17:00:00 has no timezone, assuming UTC."
+    ):
+        df = uscrn.get_nrt_data("2023-08-31 17", "hourly")
+    time_counts = df["utc_time"].value_counts()
+    assert time_counts.index[0] == pd.Timestamp("2023-08-31 16:00")
+    assert time_counts.iloc[0] / len(df) > 0.75
 
 
 def test_to_xarray_no_which_attr():
