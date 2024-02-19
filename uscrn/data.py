@@ -735,12 +735,11 @@ def get_nrt_data(
     b: pd.Timestamp | int | None
     if isinstance(period, tuple):
         a, b = period
+        a = maybe_to_utc_native_ts(a)
+        b = maybe_to_utc_native_ts(b)
     else:
         # Single selection
-        a = b = period
-
-    a = maybe_to_utc_native_ts(a)
-    b = maybe_to_utc_native_ts(b)
+        a = b = maybe_to_utc_native_ts(period)
 
     # For single selection, tweak time for file filtering
     if a is b and isinstance(a, pd.Timestamp):
@@ -771,7 +770,9 @@ def get_nrt_data(
     @retry
     def get_year_urls(year):
         if year not in available_years:
-            raise ValueError(f"year {year} not in detected available USCRN years {available_years}")
+            raise ValueError(
+                f"year {year} not in detected available USCRN years {available_years}"
+            )  # pragma: no cover
 
         # Get filenames from the year page
         # e.g. `>CRN60H0203-202402082100.txt<`
@@ -848,7 +849,7 @@ def get_nrt_data(
     print(f"Found {len(urls)} file(s) to load")
     if len(urls) > 0:
         print(urls[0])
-    if len(urls) > 2:
+    if len(urls) > 2:  # pragma: no cover
         print("...")
     if len(urls) > 1:
         print(urls[-1])

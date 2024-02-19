@@ -274,6 +274,46 @@ def test_get_nrt_ts_hourly():
     assert time_counts.index[0] == pd.Timestamp("2023-08-31 16:00")
     assert time_counts.iloc[0] / len(df) > 0.75
 
+    df2 = uscrn.get_nrt_data(pd.Timestamp("2023-08-31 12", tz="EST"), "hourly")
+    assert df2.equals(df)
+
+
+def test_get_nrt_bad_which():
+    with pytest.raises(ValueError, match="^Invalid dataset identifier."):
+        _ = get_nrt_data(-1, "asdf")
+
+
+def test_get_nrt_bad_period_element():
+    with pytest.raises(TypeError):
+        _ = get_nrt_data("asdf", "hourly")
+
+
+@pytest.mark.parametrize("year", [2019, 3000])
+def test_get_nrt_bad_year(year):
+    with pytest.raises(RuntimeError, match="^No files"):
+        _ = get_nrt_data(pd.Timestamp(year=year, month=1, day=1), "hourly")
+
+
+def test_get_nrt_single_daily_auto_floor():
+    df = get_nrt_data("2023-08-31 01", "daily")
+    assert df.lst_date.eq("2023-08-31").all()
+
+
+def test_get_nrt_zero_hourly():
+    df = get_nrt_data(0, "hourly")
+    time_counts = df["utc_time"].value_counts()
+    assert time_counts.index[0] == pd.Timestamp("2020-10-06 20") - pd.Timedelta(hours=1)
+
+
+def test_get_nrt_zero_daily():
+    df = get_nrt_data(0, "daily")
+    assert df.lst_date.eq("2020-10-06").all()
+
+
+def test_get_nrt_cat():
+    df = get_nrt_data(-1, "hourly", cat=True)
+    assert len(df.select_dtypes("category").columns) > 0
+
 
 def test_to_xarray_no_which_attr():
     with pytest.raises(NotImplementedError, match="^Guessing `which`"):
