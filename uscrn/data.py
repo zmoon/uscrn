@@ -658,7 +658,7 @@ def get_nrt_data(
       The time in the file left-labels the period (i.e., 00:00 of the same day).
 
     - for hourly, the next hour (e.g., 19:00)
-      The time in the file left-labels the hourly periods.
+      The time in the file right-labels the hourly periods.
       In our example with 19:00 from the file name,
       time in the file should be mostly 18:00,
       with 17:00 or 16:00, two or three hours behind the file name time,
@@ -822,6 +822,12 @@ def get_nrt_data(
         print(f"  - {year}")
         urls.extend(get_year_urls(year))
 
+    def get_url_filename_time(url: str) -> pd.Timestamp:
+        parts = urlsplit(url)
+        path = parts.path
+        _, s = path.split("-")
+        return pd.to_datetime(s, format=r"%Y%m%d%H%M.txt")
+
     # Remove files outside of period
     urls_ = []
     if a is b and isinstance(a, int):
@@ -830,10 +836,7 @@ def get_nrt_data(
         urls_ = urls[a:b]
     else:
         for url in urls:
-            parts = urlsplit(url)
-            path = parts.path
-            _, s = path.split("-")
-            t = pd.to_datetime(s, format=r"%Y%m%d%H%M.txt")
+            t = get_url_filename_time(url)
             if a is not None and t < a:
                 continue
             if b is not None and t > b:
@@ -866,11 +869,16 @@ def get_nrt_data(
         for col, cats in col_info.categorical.items():
             df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
-    title = f"U.S. Climate Reference Network (USCRN) | {which} | NRT"
-    # s_a = "" if a is None else str(a)
-    # s_b = "" if b is None or b.year == 3000 else str(b)
-    # s_period = f"{s_a}--{s_b}"  # FIXME
-    # title += f" | {s_period}"
+    # Set title
+    if which == "hourly":
+        fmt = r"%Y-%m-%d %H"
+    elif which == "daily":
+        fmt = r"%Y-%m-%d"
+    s_a = get_url_filename_time(urls[0]).strftime(fmt)
+    s_b = get_url_filename_time(urls[-1]).strftime(fmt)
+    title = f"U.S. Climate Reference Network (USCRN) | {which} | updates | {s_a}"
+    if s_a != s_b:
+        title += f"--{s_b}"
 
     df.attrs.update(
         which=which,
@@ -887,6 +895,9 @@ def get_nrt_data(
 def to_xarray(
     df: pd.DataFrame,
     which: Literal["subhourly", "hourly", "daily", "monthly"] | None = None,
+    *,
+    title: str | None = None,
+    keep: Literal["first", "last", False] | None = "last",
 ) -> xr.Dataset:
     """Convert to xarray representation.
 
@@ -896,9 +907,17 @@ def to_xarray(
     Parameters
     ----------
     df
-        Input dataframe, created using :func:`get_data` or one of the readers.
+        Input dataframe, created using :func:`get_data` or :func:`get_nrt_data` or one of the readers.
     which
         Which dataset. Will attempt to guess by default. Specify to override this.
+    title
+        Used to set the dataset's title attribute.
+        By default, will use ``df.attrs['title']``, if present,
+        otherwise will form using `which` and unique years present.
+    keep
+        Passed to :meth:`pandas.DataFrame.drop_duplicates`.
+        Use ``None`` to keep forgo dropping duplicates.
+        Datasets from :func:`get_nrt_data` occasionally have duplicates.
     """
     from .attrs import get_col_info, load_attrs, validate_which
 
@@ -919,6 +938,12 @@ def to_xarray(
 
     col_info = get_col_info(which)
     notes = col_info.notes
+
+    if title is None:
+        title = df.attrs.get("title", None)
+
+    if keep is not None:
+        df = df.drop_duplicates(subset=["wban", time_var], keep=keep, ignore_index=True)
 
     ds = (
         df.set_index(["wban", time_var])
@@ -991,20 +1016,22 @@ def to_xarray(
 
     # ds attrs
     now = datetime.datetime.now(datetime.timezone.utc)
-    unique_years_init = sorted(df[time_var].dt.year.unique())
-    unique_years = []
-    for y in unique_years_init:
-        t = ds.time.sel(time=str(y))
-        if t.size == 1 and t == pd.Timestamp(year=y, month=1, day=1):
-            continue
-        unique_years.append(y)
-    if len(unique_years) == 0:
-        s_years = "?"
-    elif len(unique_years) == 1:
-        s_years = str(unique_years[0])
-    else:
-        s_years = f"{unique_years[0]}--{unique_years[-1]}"
-    ds.attrs["title"] = f"U.S. Climate Reference Network (USCRN) | {which} | {s_years}"
+    if title is None:
+        unique_years_init = sorted(df[time_var].dt.year.unique())
+        unique_years = []
+        for y in unique_years_init:
+            t = ds.time.sel(time=str(y))
+            if t.size == 1 and t == pd.Timestamp(year=y, month=1, day=1):
+                continue
+            unique_years.append(y)
+        if len(unique_years) == 0:
+            s_years = "?"
+        elif len(unique_years) == 1:
+            s_years = str(unique_years[0])
+        else:
+            s_years = f"{unique_years[0]}--{unique_years[-1]}"
+        title = f"U.S. Climate Reference Network (USCRN) | {which} | {s_years}"
+    ds.attrs["title"] = title
     ds.attrs["created"] = str(now)
     ds.attrs["source"] = base_url
     ds.attrs["notes"] = notes
