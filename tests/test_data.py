@@ -10,6 +10,7 @@ from packaging.version import Version
 import uscrn
 from uscrn.data import (
     _which_to_reader,
+    auto_title,
     get_data,
     get_nrt_data,
     load_meta,
@@ -104,6 +105,27 @@ def test_read(which, url):
 
     assert {"long_name", "units"} <= ds.latitude.attrs.keys()
     assert {"long_name", "units"} <= ds.longitude.attrs.keys()
+
+    auto_xr_title = ds.title
+    if which.endswith("_nrt"):
+        which_ = which[: -len("_nrt")]
+        if which_ == "hourly":
+            assert (
+                auto_xr_title
+                == f"U.S. Climate Reference Network (USCRN) | {which_} | 2024-02-08 20"
+            )
+        elif which_ == "daily":
+            assert (
+                auto_xr_title == f"U.S. Climate Reference Network (USCRN) | {which_} | 2024-02-07"
+            )
+        else:
+            raise AssertionError
+    elif which == "monthly":
+        assert auto_xr_title.startswith(
+            f"U.S. Climate Reference Network (USCRN) | {which} | 2003-09--20"
+        )
+    else:
+        assert auto_xr_title == f"U.S. Climate Reference Network (USCRN) | {which} | 2019"
 
     if which == "subhourly":
         assert "depth" not in ds.dims
@@ -263,6 +285,7 @@ def test_get_nrt_m1_daily():
 def test_get_nrt_mslice():
     df = get_nrt_data((-2, None), "daily")
     assert df.lst_date.nunique() == 2
+    assert "--" in df.attrs["title"].split(" | ")[-1]
 
 
 def test_get_nrt_ts_hourly():
@@ -273,6 +296,10 @@ def test_get_nrt_ts_hourly():
     time_counts = df["utc_time"].value_counts()
     assert time_counts.index[0] == pd.Timestamp("2023-08-31 16:00")
     assert time_counts.iloc[0] / len(df) > 0.75
+    assert (
+        df.attrs["title"]
+        == "U.S. Climate Reference Network (USCRN) | hourly | updates | 2023-08-31 17"
+    )
 
     df2 = uscrn.get_nrt_data(pd.Timestamp("2023-08-31 12", tz="EST"), "hourly")
     assert df2.equals(df)
@@ -291,11 +318,14 @@ def test_get_nrt_bad_period_element():
 @pytest.mark.parametrize("year", [2019, 3000])
 def test_get_nrt_bad_year(year):
     with pytest.raises(RuntimeError, match="^No files"):
-        _ = get_nrt_data(pd.Timestamp(year=year, month=1, day=1), "hourly")
+        _ = get_nrt_data(pd.Timestamp(year=year, month=1, day=1, tz="UTC"), "hourly")
 
 
 def test_get_nrt_single_daily_auto_floor():
-    df = get_nrt_data("2023-08-31 01", "daily")
+    with pytest.warns(
+        UserWarning, match="Timestamp 2023-08-31 01:00:00 has no timezone, assuming UTC."
+    ):
+        df = get_nrt_data("2023-08-31 01", "daily")
     assert df.lst_date.eq("2023-08-31").all()
 
 
@@ -308,6 +338,9 @@ def test_get_nrt_zero_hourly():
 def test_get_nrt_zero_daily():
     df = get_nrt_data(0, "daily")
     assert df.lst_date.eq("2020-10-06").all()
+    assert (
+        df.attrs["title"] == "U.S. Climate Reference Network (USCRN) | daily | updates | 2020-10-06"
+    )
 
 
 def test_get_nrt_cat():
@@ -318,6 +351,14 @@ def test_get_nrt_cat():
 def test_to_xarray_no_which_attr():
     with pytest.raises(NotImplementedError, match="^Guessing `which`"):
         to_xarray(pd.DataFrame())
+
+
+def test_auto_title_bad_input():
+    with pytest.raises(TypeError, match="^Failed to convert a and b to pandas datetime"):
+        auto_title(("asdf", "asdf"), "daily")
+
+    with pytest.raises(TypeError, match="^Expected a and b to be coercible to pandas.Timestamp"):
+        auto_title((["2023-08-01", "2023-08-02"], "2023-08-04"), "daily")
 
 
 def test_df_parquet_roundtrip(tmp_path):

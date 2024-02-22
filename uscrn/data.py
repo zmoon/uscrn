@@ -449,7 +449,7 @@ def get_data(
 
     validate_which(which)
 
-    if which == "monthly" and years is not None:
+    if which == "monthly" and years is not None:  # pragma: no cover
         warnings.warn("`years` ignored for monthly data.")
 
     stored_attrs = load_attrs()
@@ -826,7 +826,9 @@ def get_nrt_data(
         parts = urlsplit(url)
         path = parts.path
         _, s = path.split("-")
-        return pd.to_datetime(s, format=r"%Y%m%d%H%M.txt")
+        t = pd.to_datetime(s, format=r"%Y%m%d%H%M.txt")
+        assert isinstance(t, pd.Timestamp)
+        return t
 
     # Remove files outside of period
     urls_ = []
@@ -837,10 +839,14 @@ def get_nrt_data(
     else:
         for url in urls:
             t = get_url_filename_time(url)
-            if a is not None and t < a:
-                continue
-            if b is not None and t > b:
-                continue
+            if a is not None:
+                assert isinstance(a, pd.Timestamp)
+                if t < a:
+                    continue
+            if b is not None:
+                assert isinstance(b, pd.Timestamp)
+                if t > b:
+                    continue
             urls_.append(url)
     urls = urls_
 
@@ -913,7 +919,7 @@ def to_xarray(
     title
         Used to set the dataset's title attribute.
         By default, will use ``df.attrs['title']``, if present,
-        otherwise will form using `which` and unique years present.
+        otherwise will form using `which` and min/max time in the dataset.
     keep
         Passed to :meth:`pandas.DataFrame.drop_duplicates`.
         Use ``None`` to keep forgo dropping duplicates.
@@ -985,7 +991,7 @@ def to_xarray(
         assert isinstance(vn, str)
         attrs = var_attrs.get(vn)
         if attrs is None:
-            if vn not in {"time", "depth"}:
+            if vn not in {"time", "depth"}:  # pragma: no cover
                 warnings.warn(f"no attrs for {vn}")
             continue
         attrs_ = {
@@ -1017,23 +1023,76 @@ def to_xarray(
     # ds attrs
     now = datetime.datetime.now(datetime.timezone.utc)
     if title is None:
-        unique_years_init = sorted(df[time_var].dt.year.unique())
-        unique_years = []
-        for y in unique_years_init:
-            t = ds.time.sel(time=str(y))
-            if t.size == 1 and t == pd.Timestamp(year=y, month=1, day=1):
-                continue
-            unique_years.append(y)
-        if len(unique_years) == 0:
-            s_years = "?"
-        elif len(unique_years) == 1:
-            s_years = str(unique_years[0])
-        else:
-            s_years = f"{unique_years[0]}--{unique_years[-1]}"
-        title = f"U.S. Climate Reference Network (USCRN) | {which} | {s_years}"
+        title = auto_title((df[time_var].min(), df[time_var].max()), which)
     ds.attrs["title"] = title
     ds.attrs["created"] = str(now)
     ds.attrs["source"] = base_url
     ds.attrs["notes"] = notes
 
     return ds
+
+
+def auto_title(ab, which: Literal["subhourly", "hourly", "daily", "monthly"]) -> str:
+    """Auto-generate a title for a USCRN dataset
+    based on the time min/max (`ab`).
+
+    Simplifying if detecting whole year(s),
+    otherwise using appropriate date format for the frequency.
+    """
+    from .attrs import validate_which
+
+    a, b = ab
+    try:
+        a = pd.to_datetime(a)
+        b = pd.to_datetime(b)
+    except Exception as e:
+        raise TypeError(f"Failed to convert a and b to pandas datetime. ab: {ab!r}.") from e
+    if not isinstance(a, pd.Timestamp) or not isinstance(b, pd.Timestamp):
+        raise TypeError(
+            "Expected a and b to be coercible to pandas.Timestamp. "
+            f"Got {a!r} and {b!r} from ab {ab!r}."
+        )
+
+    validate_which(which)
+
+    base_fmts = {
+        "subhourly": r"%Y-%m-%d %H:%M",
+        "hourly": r"%Y-%m-%d %H",
+        "daily": r"%Y-%m-%d",
+        "monthly": r"%Y-%m",
+    }
+
+    full_years: bool
+    if which == "subhourly":
+        full_years = a == a.replace(month=1, day=1, hour=0, minute=5).floor(
+            "5min"
+        ) and b == b.replace(month=1, day=1, hour=0, minute=0).floor("5min")
+    elif which == "hourly":
+        full_years = a == a.replace(month=1, day=1, hour=1).floor("h") and b == b.replace(
+            month=1, day=1, hour=0
+        ).floor("h")
+    elif which == "daily":
+        full_years = a == a.replace(month=1, day=1).floor("d") and b == pd.Timestamp(
+            year=b.year + 1, month=1, day=1
+        ) - pd.Timedelta(days=1)
+    elif which == "monthly":
+        full_years = a.month == 1 and b.month == 12
+    else:  # pragma: no cover
+        raise AssertionError
+
+    if full_years:
+        s_a = a.strftime(r"%Y")
+        if which in {"subhourly", "hourly"}:
+            s_b = (b.replace(year=b.year - 1)).strftime(r"%Y")
+        else:
+            s_b = b.strftime(r"%Y")
+    else:
+        fmt = base_fmts[which]
+        s_a = a.strftime(fmt)
+        s_b = b.strftime(fmt)
+
+    s_period = s_a
+    if s_b != s_a:
+        s_period += f"--{s_b}"
+
+    return f"U.S. Climate Reference Network (USCRN) | {which} | {s_period}"
