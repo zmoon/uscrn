@@ -360,6 +360,9 @@ def test_auto_title_bad_input():
     with pytest.raises(TypeError, match="^Expected a and b to be coercible to pandas.Timestamp"):
         auto_title((["2023-08-01", "2023-08-02"], "2023-08-04"), "daily")
 
+    with pytest.raises(ValueError, match="^Expected b >= a"):
+        auto_title(("2023-01-01 01", "2023-01-01 00"), "hourly")
+
 
 def test_df_parquet_roundtrip(tmp_path):
     import fastparquet

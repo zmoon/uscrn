@@ -1053,6 +1053,9 @@ def auto_title(ab, which: Literal["subhourly", "hourly", "daily", "monthly"]) ->
             f"Got {a!r} and {b!r} from ab {ab!r}."
         )
 
+    if not b >= a:
+        raise ValueError(f"Expected b >= a, got a: {a}, b: {b} from ab: {ab!r}.")
+
     validate_which(which)
 
     base_fmts = {
@@ -1062,21 +1065,28 @@ def auto_title(ab, which: Literal["subhourly", "hourly", "daily", "monthly"]) ->
         "monthly": r"%Y-%m",
     }
 
+    # fmt: off
     full_years: bool
     if which == "subhourly":
-        full_years = a == a.replace(month=1, day=1, hour=0, minute=5).floor(
-            "5min"
-        ) and b == b.replace(month=1, day=1, hour=0, minute=0).floor("5min")
+        full_years = (
+            b > a
+            and a == a.replace(month=1, day=1, hour=0, minute=5).floor("5min")
+            and b == b.replace(month=1, day=1, hour=0, minute=0).floor("5min")
+        )
     elif which == "hourly":
-        full_years = a == a.replace(month=1, day=1, hour=1).floor("h") and b == b.replace(
-            month=1, day=1, hour=0
-        ).floor("h")
+        full_years = (
+            b > a
+            and a == a.replace(month=1, day=1, hour=1).floor("h")
+            and b == b.replace(month=1, day=1, hour=0).floor("h")
+        )
     elif which == "daily":
-        full_years = a == a.replace(month=1, day=1).floor("d") and b == pd.Timestamp(
-            year=b.year + 1, month=1, day=1
-        ) - pd.Timedelta(days=1)
+        full_years = (
+            a == a.replace(month=1, day=1).floor("d")
+            and b == pd.Timestamp(year=b.year + 1, month=1, day=1) - pd.Timedelta(days=1)
+        )
     elif which == "monthly":
         full_years = a.month == 1 and b.month == 12
+    # fmt: on
     else:  # pragma: no cover
         raise AssertionError
 
