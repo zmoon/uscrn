@@ -61,3 +61,4 @@ autosummary_generate = True
 
 nb_execution_mode = "cache"
 nb_execution_excludepatterns = ["examples/daily.ipynb"]
+nb_execution_raise_on_error = True

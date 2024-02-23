@@ -8,6 +8,7 @@
 
 examples/daily.ipynb
 examples/stations.ipynb
+examples/nrt.ipynb
 ```
 
 ```{toctree}
