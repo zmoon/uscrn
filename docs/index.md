@@ -1,3 +1,7 @@
+```{module} uscrn
+
+```
+
 ```{include} ../README.md
 
 ```
