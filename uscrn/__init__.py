@@ -5,6 +5,8 @@ Load `U.S. Climate Reference Network <https://www.ncei.noaa.gov/access/crn/>`__ 
 * Info: https://www.ncei.noaa.gov/access/crn/qcdatasets.html
 * Data: https://www.ncei.noaa.gov/pub/data/uscrn/products/
 
+.. currentmodule:: ~
+
 Get data
 --------
 
