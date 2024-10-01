@@ -54,4 +54,32 @@ def current_commit() -> str | None:
     except Exception:
         return None
     else:
-        return f"{cp.stdout.strip()}"
+        return cp.stdout.strip()
+
+
+def get_tags() -> str | None:
+    import subprocess
+
+    maybe_repo = HERE.parent
+
+    cmd = ["git", "-C", maybe_repo.as_posix(), "tag"]
+    try:
+        cp = subprocess.run(cmd, text=True, capture_output=True)
+    except Exception:
+        return None
+    else:
+        tags = cp.stdout.strip().splitlines()
+
+    # Get commit associated with each tag
+    commits = []
+    for tag in tags:
+        cmd = ["git", "-C", maybe_repo.as_posix(), "rev-list", "-n", "1", "--abbrev-commit", tag]
+        try:
+            cp = subprocess.run(cmd, text=True, capture_output=True)
+        except Exception:
+            commit = None
+        else:
+            commit = cp.stdout.strip()
+        commits.append(commit)
+
+    return list(zip(tags, commits))
