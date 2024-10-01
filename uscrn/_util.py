@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import datetime
 import logging
 from pathlib import Path
 
@@ -83,3 +86,19 @@ def get_tags() -> str | None:
         commits.append(commit)
 
     return list(zip(tags, commits))
+
+
+def commit_date(commit: str) -> datetime.datetime | None:
+    import subprocess
+
+    maybe_repo = HERE.parent
+
+    cmd = ["git", "-C", maybe_repo.as_posix(), "show", "--no-patch", r"--format=%cI", commit]
+    try:
+        cp = subprocess.run(cmd, text=True, capture_output=True)
+    except Exception:
+        return None
+    else:
+        iso = cp.stdout.strip()
+
+    return datetime.datetime.fromisoformat(iso)
