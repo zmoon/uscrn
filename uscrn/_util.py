@@ -60,7 +60,7 @@ def current_commit() -> str | None:
         return cp.stdout.strip()
 
 
-def get_tags() -> str | None:
+def get_tags() -> list[tuple[str, str]] | None:
     import subprocess
 
     maybe_repo = HERE.parent
@@ -102,3 +102,26 @@ def commit_date(commit: str) -> datetime.datetime | None:
         iso = cp.stdout.strip()
 
     return datetime.datetime.fromisoformat(iso)
+
+
+def maybe_fancy_version() -> str:
+    from . import __version__
+
+    commit = current_commit()
+    if commit is None:
+        return __version__
+
+    tags = get_tags()
+    if tags is None:
+        return __version__
+
+    for _, tag_commit in tags:
+        if tag_commit == commit:
+            return __version__
+
+    ver = f"{__version__}+{commit}"
+    date = commit_date(commit)
+    if date is not None:
+        ver += f" ({date:%Y-%m-%d})"
+
+    return ver
