@@ -113,7 +113,7 @@ def maybe_fancy_version() -> str:
 
     tags = get_tags()
     if tags is None:
-        return __version__
+        return __version__  # or tag?
 
     for _, tag_commit in tags:
         if tag_commit == commit:
