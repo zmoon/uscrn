@@ -53,7 +53,7 @@ def current_commit() -> str | None:
 
     cmd = ["git", "-C", maybe_repo.as_posix(), "rev-parse", "--verify", "--short", "HEAD"]
     try:
-        cp = subprocess.run(cmd, text=True, capture_output=True)
+        cp = subprocess.run(cmd, check=True, text=True, capture_output=True)
     except Exception:
         return None
     else:
@@ -67,7 +67,7 @@ def get_tags() -> list[tuple[str, str]] | None:
 
     cmd = ["git", "-C", maybe_repo.as_posix(), "tag"]
     try:
-        cp = subprocess.run(cmd, text=True, capture_output=True)
+        cp = subprocess.run(cmd, check=True, text=True, capture_output=True)
     except Exception:
         return None
     else:
@@ -95,7 +95,7 @@ def commit_date(commit: str) -> datetime.datetime | None:
 
     cmd = ["git", "-C", maybe_repo.as_posix(), "show", "--no-patch", r"--format=%cI", commit]
     try:
-        cp = subprocess.run(cmd, text=True, capture_output=True)
+        cp = subprocess.run(cmd, check=True, text=True, capture_output=True)
     except Exception:
         return None
     else:
