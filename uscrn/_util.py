@@ -1,4 +1,7 @@
 import logging
+from pathlib import Path
+
+HERE = Path(__file__).parent
 
 logger = logging.getLogger("uscrn")
 
@@ -38,3 +41,17 @@ def retry(func):
                 a, b = b, a + b  # Fibonacci backoff
 
     return wrapper
+
+
+def current_commit() -> str | None:
+    import subprocess
+
+    maybe_repo = HERE.parent
+
+    cmd = ["git", "-C", maybe_repo.as_posix(), "rev-parse", "--verify", "--short", "HEAD"]
+    try:
+        cp = subprocess.run(cmd, text=True, capture_output=True)
+    except Exception:
+        return None
+    else:
+        return f"{cp.stdout.strip()}"
