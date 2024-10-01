@@ -101,6 +101,9 @@ def commit_date(commit: str) -> datetime.datetime | None:
     else:
         iso = cp.stdout.strip()
 
+    if iso == "":
+        return None
+
     return datetime.datetime.fromisoformat(iso)
 
 
