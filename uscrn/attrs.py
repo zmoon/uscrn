@@ -192,7 +192,7 @@ def _map_dtype(dtype: str) -> type | None:
 
 @lru_cache(len(WHICHS))
 def get_col_info(
-    which: Literal["subhourly", "hourly", "daily", "monthly"] = "daily"
+    which: Literal["subhourly", "hourly", "daily", "monthly"] = "daily",
 ) -> _DsetVarInfo:
     """Column (variable) info (the individual data files don't have headers),
     intended for use in ``read_csv``.
@@ -276,7 +276,7 @@ def get_col_info(
 
 
 def _get_docs(
-    which: Literal["subhourly", "hourly", "daily", "monthly"] = "daily"
+    which: Literal["subhourly", "hourly", "daily", "monthly"] = "daily",
 ) -> tuple[str, str]:
     """Get the header and readme docs as strings.
 
