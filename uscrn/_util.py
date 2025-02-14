@@ -55,6 +55,7 @@ def current_commit() -> str | None:
     try:
         cp = subprocess.run(cmd, check=True, text=True, capture_output=True)
     except Exception:
+        logger.exception("Could not get commit hash")
         return None
     else:
         return cp.stdout.strip()
@@ -69,6 +70,7 @@ def get_tags() -> list[tuple[str, str | None]] | None:
     try:
         cp = subprocess.run(cmd, check=True, text=True, capture_output=True)
     except Exception:
+        logger.exception("Could not get tags")
         return None
     else:
         tags = cp.stdout.strip().splitlines()
@@ -80,6 +82,7 @@ def get_tags() -> list[tuple[str, str | None]] | None:
         try:
             cp = subprocess.run(cmd, text=True, capture_output=True)
         except Exception:
+            logger.exception(f"Could not get commit for tag {tag}")
             commit = None
         else:
             commit = cp.stdout.strip()
@@ -97,11 +100,13 @@ def commit_date(commit: str) -> datetime.datetime | None:
     try:
         cp = subprocess.run(cmd, check=True, text=True, capture_output=True)
     except Exception:
+        logger.exception(f"Could not get date for commit {commit}")
         return None
     else:
         iso = cp.stdout.strip()
 
     if iso == "":
+        logger.debug(f"Git returned empty string for commit {commit} date")
         return None
 
     return datetime.datetime.fromisoformat(iso)
@@ -118,8 +123,9 @@ def maybe_fancy_version() -> str:
     if tags is None:
         return __version__  # or tag?
 
-    for _, tag_commit in tags:
+    for tag, tag_commit in tags:
         if tag_commit == commit:
+            logger.debug(f"Commit {commit} is tagged ({tag})")
             return __version__
 
     ver = f"{__version__}+{commit}"
