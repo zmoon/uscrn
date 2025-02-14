@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+from functools import lru_cache
 from pathlib import Path
 
 HERE = Path(__file__).parent
@@ -93,10 +94,22 @@ def get_tags() -> list[tuple[str, str | None]] | None:
     return list(zip(tags, commits))
 
 
+@lru_cache(1)
+def on_rtd() -> bool:
+    import os
+
+    return os.environ.get("READTHEDOCS", "False") == "True"
+
+
 def commit_date(commit: str) -> datetime.datetime | None:
     import subprocess
 
-    maybe_repo = HERE.parent
+    if on_rtd():
+        import os
+
+        maybe_repo = Path(os.environ["READTHEDOCS_REPOSITORY_PATH"])
+    else:
+        maybe_repo = HERE.parent
 
     cmd = ["git", "-C", maybe_repo.as_posix(), "show", "--no-patch", r"--format=%cI", commit]
     try:
@@ -119,15 +132,18 @@ def maybe_fancy_version() -> str:
 
     from . import __version__
 
-    on_rtd = os.environ.get("READTHEDOCS", "False") == "True"
-
-    if on_rtd:
+    if on_rtd():
         rtd_git_id = os.environ["READTHEDOCS_GIT_IDENTIFIER"]
-        rtd_git_hash = os.environ["READTHEDOCS_GIT_COMMIT_HASH"][:7]
         if rtd_git_id == __version__:
             return __version__
         else:
-            return f"{__version__}+{rtd_git_hash}"
+            rtd_git_hash = os.environ["READTHEDOCS_GIT_COMMIT_HASH"]
+            commit = rtd_git_hash[:7]
+
+            ver = f"{__version__}+{commit}"
+            date = commit_date(commit)
+            if date is not None:
+                ver += f" ({date:%Y-%m-%d})"
 
     commit = current_commit()
     if commit is None:
