@@ -115,7 +115,19 @@ def commit_date(commit: str) -> datetime.datetime | None:
 
 
 def maybe_fancy_version() -> str:
+    import os
+
     from . import __version__
+
+    on_rtd = os.environ.get("READTHEDOCS", "False") == "True"
+
+    if on_rtd:
+        rtd_git_id = os.environ["READTHEDOCS_GIT_IDENTIFIER"]
+        rtd_git_hash = os.environ["READTHEDOCS_GIT_COMMIT_HASH"]
+        if rtd_git_id == __version__:
+            return __version__
+        else:
+            return f"{__version__}+{rtd_git_hash}"
 
     commit = current_commit()
     if commit is None:
