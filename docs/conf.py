@@ -1,7 +1,7 @@
 import uscrn
 
 project = "uscrn"
-copyright = "2023\u20132024"
+copyright = "2023\u20132025"
 author = "zmoon"
 
 version = uscrn.__version__.split("+")[0]
