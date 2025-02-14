@@ -8,6 +8,8 @@ HERE = Path(__file__).parent
 
 logger = logging.getLogger("uscrn")
 
+logger.setLevel(logging.DEBUG)
+
 
 def retry(func):
     """Decorator to retry a function on web connection error.
