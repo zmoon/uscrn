@@ -1,11 +1,12 @@
 import uscrn
 
 project = "uscrn"
-copyright = "2023\u20132024"
+copyright = "2023\u20132025"
 author = "zmoon"
 
 version = uscrn.__version__.split("+")[0]
 release = uscrn.__version__
+footer_version = uscrn._util.maybe_fancy_version()
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -46,7 +47,7 @@ html_theme_options = {
     "use_download_button": False,
     "extra_footer": f"""\
     <span style="font-size: 0.8em;">uscrn version in this docs build:
-    <strong>{version}</strong>.</span>
+    <strong>{footer_version}</strong>.</span>
     """,
 }
 
