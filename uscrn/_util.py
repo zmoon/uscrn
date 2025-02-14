@@ -60,7 +60,7 @@ def current_commit() -> str | None:
         return cp.stdout.strip()
 
 
-def get_tags() -> list[tuple[str, str]] | None:
+def get_tags() -> list[tuple[str, str | None]] | None:
     import subprocess
 
     maybe_repo = HERE.parent
