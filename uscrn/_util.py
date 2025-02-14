@@ -132,6 +132,7 @@ def maybe_fancy_version() -> str:
 
     from . import __version__
 
+    commit: str | None
     if on_rtd():
         rtd_git_id = os.environ["READTHEDOCS_GIT_IDENTIFIER"]
         if rtd_git_id == __version__:
@@ -144,6 +145,8 @@ def maybe_fancy_version() -> str:
             date = commit_date(commit)
             if date is not None:
                 ver += f" ({date:%Y-%m-%d})"
+
+            return ver
 
     commit = current_commit()
     if commit is None:
