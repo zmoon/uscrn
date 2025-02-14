@@ -123,7 +123,7 @@ def maybe_fancy_version() -> str:
 
     if on_rtd:
         rtd_git_id = os.environ["READTHEDOCS_GIT_IDENTIFIER"]
-        rtd_git_hash = os.environ["READTHEDOCS_GIT_COMMIT_HASH"]
+        rtd_git_hash = os.environ["READTHEDOCS_GIT_COMMIT_HASH"][:7]
         if rtd_git_id == __version__:
             return __version__
         else:
