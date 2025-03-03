@@ -16,7 +16,7 @@ repos:
         args: [--py39-plus]
 
   - repo: https://github.com/PyCQA/isort
-    rev: "6.0.0"
+    rev: "6.0.1"
     hooks:
       - id: isort
 
@@ -26,11 +26,11 @@ repos:
       - id: black
 
   - repo: https://github.com/PyCQA/flake8
-    rev: "7.1.1"
+    rev: "7.1.2"
     hooks:
       - id: flake8
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.4.2"
+    rev: "v3.5.3"
     hooks:
       - id: prettier
