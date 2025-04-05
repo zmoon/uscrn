@@ -535,7 +535,7 @@ def get_data(
     print(f"{len(urls)} file(s) found")
     if len(urls) > 0:
         print(urls[0])
-    if len(urls) > 2:
+    if len(urls) > 2:  # pragma: no cover
         print("...")
     if len(urls) > 1:
         print(urls[-1])
