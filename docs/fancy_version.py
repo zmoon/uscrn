@@ -40,6 +40,12 @@ class GitInfo:
         Errors aren't raised if this isn't actually a Git repository.
         """
 
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.repo})"
+
+    def __str__(self) -> str:
+        return self.repo.as_posix()
+
     @staticmethod
     def _find_git_repo(start_path: Path, /) -> Path:
         """Find the Git repository by walking up the directory tree.
@@ -168,6 +174,12 @@ class VersionInfo:
         assert spec.name == spec.parent == self.module.__name__
 
         self.git_info = GitInfo(Path(inspect.getfile(self.module)).parent)
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.module})"
+
+    def __str__(self):
+        return self.package_name
 
     @property
     def package_name(self) -> str:
