@@ -10,7 +10,10 @@ from functools import lru_cache
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from types import ModuleType
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
+
+if TYPE_CHECKING:
+    from packaging.version import Version
 
 logger = logging.getLogger(__name__)
 
@@ -213,6 +216,12 @@ class VersionInfo:
 
         logger.debug(f"Package {self.package_name!r} detected version: {set_version}")
         return set_version
+
+    def version_info(self) -> Version:
+        """Parse the package version, returning a :class:`packaging.version.Version` object."""
+        from packaging.version import Version
+
+        return Version(self.version())
 
     def fancy_version(
         self,
