@@ -33,7 +33,7 @@ df.to_parquet("uscrn_2019_hourly.parquet", engine="pyarrow")
 Conda install example[^c]:
 
 ```sh
-conda create -n crn -c conda-forge python=3.10 joblib numpy pandas pyyaml requests xarray pyarrow netcdf4
+conda create -n crn -c conda-forge python=3.11 joblib numpy pandas pyyaml requests xarray pyarrow netcdf4
 conda activate crn
 pip install --no-deps uscrn
 ```
