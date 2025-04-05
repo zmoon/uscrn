@@ -308,11 +308,11 @@ class VersionInfo:
 
         commit = self.git_info.current_commit()
         assert isinstance(commit, str)
-        ver = f"{set_version}+{commit_template.format(commit=commit)}"
+        fancy_version = f"{set_version}+{commit_template.format(commit=commit)}"
         if self.git_info.dirty():
-            ver += "*"
+            fancy_version += "*"
         date = self.git_info.commit_date(commit)
         if date is not None:
-            ver += f" ({date:%Y-%m-%d})"
+            fancy_version += f" ({date:%Y-%m-%d})"
 
-        return ver
+        return fancy_version
