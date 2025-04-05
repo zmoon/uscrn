@@ -39,7 +39,7 @@ class GitInfo:
         Path to a directory within a (potential) Git repository.
     """
 
-    def __init__(self, directory: str | Path):
+    def __init__(self, directory: str | Path, /) -> None:
         self.repo = self._find_git_repo(Path(directory))
         """The detected Git repository path.
         Errors aren't raised if this isn't actually a Git repository.
@@ -166,7 +166,7 @@ class VersionInfo:
         or an actual module object.
     """
 
-    def __init__(self, package: str | ModuleType):
+    def __init__(self, package: str | ModuleType) -> None:
         if isinstance(package, str):
             self.module = importlib.import_module(package)
         elif isinstance(package, ModuleType):
