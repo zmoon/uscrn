@@ -93,6 +93,10 @@ class GitInfo:
         :
             The short commit hash or ``None`` if it couldn't be retrieved.
         """
+        if self.on_rtd():
+            rtd_git_hash = os.environ["READTHEDOCS_GIT_COMMIT_HASH"]
+            return rtd_git_hash[:7]
+
         cmd = ["git", "-C", self.repo.as_posix(), "rev-parse", "--verify", "--short", "HEAD"]
         try:
             cp = subprocess.run(cmd, check=True, text=True, capture_output=True)
@@ -223,6 +227,28 @@ class VersionInfo:
 
         return Version(self.version())
 
+    def on_tag(self) -> bool | None:
+        """Are we a tagged commit? Or ``None`` if can't determine."""
+        if self.git_info.on_rtd():
+            rtd_git_id = os.environ["READTHEDOCS_GIT_IDENTIFIER"]
+            logger.debug(f"READTHEDOCS_GIT_IDENTIFIER: {rtd_git_id}")
+            return rtd_git_id == self.version()
+
+        tags = self.git_info.tags()
+        if tags is None:
+            return None
+
+        commit = self.git_info.current_commit()
+        if commit is None:
+            return None
+
+        for tag_info in tags:
+            if tag_info.commit == commit:
+                logger.debug(f"Commit {commit} is tagged ({tag_info.name})")
+                return True
+
+        return False
+
     def fancy_version(
         self,
         *,
@@ -243,35 +269,12 @@ class VersionInfo:
         """
         set_version = self.version()
 
-        commit: str | None
-        if self.git_info.on_rtd():
-            rtd_git_id = os.environ["READTHEDOCS_GIT_IDENTIFIER"]
-            if rtd_git_id == set_version:
-                return set_version
-            else:
-                rtd_git_hash = os.environ["READTHEDOCS_GIT_COMMIT_HASH"]
-                commit = rtd_git_hash[:7]
-
-                ver = f"{set_version}+{commit}"
-                date = self.git_info.commit_date(commit)
-                if date is not None:
-                    ver += f" ({date:%Y-%m-%d})"
-
-                return ver
+        on_tag = self.on_tag()
+        if on_tag or on_tag is None:
+            return set_version
 
         commit = self.git_info.current_commit()
-        if commit is None:
-            return set_version
-
-        tags = self.git_info.tags()
-        if tags is None:
-            return set_version
-
-        for tag_info in tags:
-            if tag_info.commit == commit:
-                logger.debug(f"Commit {commit} is tagged ({tag_info.name})")
-                return set_version
-
+        assert isinstance(commit, str)
         ver = f"{set_version}+{commit_template.format(commit=commit)}"
         date = self.git_info.commit_date(commit)
         if date is not None:
