@@ -45,14 +45,18 @@ class GitInfo:
     def __init__(self, directory: str | Path, /) -> None:
         self.repo = self._find_git_repo(Path(directory))
         """The detected Git repository path.
-        Errors aren't raised if this isn't actually a Git repository.
+        Or ``None`` if the directory is found to be within a site-packages directory,
+        which could be within a venv within our Git repository.
         """
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.repo})"
 
     def __str__(self) -> str:
-        return self.repo.as_posix()
+        if self.repo is None:
+            return ""
+        else:
+            return self.repo.as_posix()
 
     @staticmethod
     @lru_cache(1)
@@ -60,7 +64,7 @@ class GitInfo:
         """Check if we are on ReadTheDocs."""
         return os.environ.get("READTHEDOCS", "False") == "True"
 
-    def _find_git_repo(self, start_path: Path, /) -> Path:
+    def _find_git_repo(self, start_path: Path, /) -> Path | None:
         """Find the Git repository by walking up the directory tree.
 
         Parameters
@@ -78,7 +82,8 @@ class GitInfo:
 
         for path in [start_path, *start_path.parents]:
             if path.name == "site-packages":
-                break
+                logger.debug("Found site-packages directory, possible venv")
+                return None
             if (path / ".git").is_dir():
                 return path
 
@@ -93,6 +98,9 @@ class GitInfo:
         :
             The short commit hash or ``None`` if it couldn't be retrieved.
         """
+        if self.repo is None:
+            return None
+
         if self.on_rtd():
             rtd_git_hash = os.environ["READTHEDOCS_GIT_COMMIT_HASH"]
             return rtd_git_hash[:7]
@@ -114,6 +122,9 @@ class GitInfo:
         commit
             The commit hash of interest.
         """
+        if self.repo is None:
+            return None
+
         cmd = ["git", "-C", self.repo.as_posix(), "show", "--no-patch", r"--format=%cI", commit]
         try:
             cp = subprocess.run(cmd, check=True, text=True, capture_output=True)
@@ -137,6 +148,9 @@ class GitInfo:
         :
             List of TagInfo(name, commit) objects or ``None`` if tags couldn't be retrieved.
         """
+        if self.repo is None:
+            return None
+
         cmd = ["git", "-C", self.repo.as_posix(), "tag"]
         try:
             cp = subprocess.run(cmd, check=True, text=True, capture_output=True)
@@ -161,8 +175,11 @@ class GitInfo:
 
         return result
 
-    def dirty(self) -> bool:
+    def dirty(self) -> bool | None:
         """Are there staged or unstaged changes?"""
+        if self.repo is None:
+            return None
+
         if self.on_rtd():
             return False
 
@@ -171,7 +188,7 @@ class GitInfo:
             cp = subprocess.run(cmd, check=True, text=True, capture_output=True)
         except Exception:
             logger.exception("Could not get dirty status")
-            return False
+            return None
         else:
             return cp.stdout.strip() != ""
 
