@@ -14,8 +14,6 @@ from typing import NamedTuple
 
 logger = logging.getLogger(__name__)
 
-logger.setLevel(logging.DEBUG)
-
 
 class TagInfo(NamedTuple):
     name: str
@@ -53,11 +51,11 @@ class GitInfo:
         Parameters
         ----------
         start_path
-            Path to start searching from
+            Path to start searching from.
 
         Returns
         -------
-        Path
+        :
             Path to the Git repository root or the start path if no repo found.
         """
         for path in [start_path, *start_path.parents]:
@@ -72,7 +70,7 @@ class GitInfo:
 
         Returns
         -------
-        str or None
+        :
             The short commit hash or None if it couldn't be retrieved
         """
         cmd = ["git", "-C", self.repo.as_posix(), "rev-parse", "--verify", "--short", "HEAD"]
@@ -117,8 +115,8 @@ class GitInfo:
 
         Returns
         -------
-        list of TagInfo or None
-            List of TagInfo(name, commit) objects or None if tags couldn't be retrieved
+        :
+            List of TagInfo(name, commit) objects or ``None`` if tags couldn't be retrieved.
         """
         cmd = ["git", "-C", self.repo.as_posix(), "tag"]
         try:
@@ -212,7 +210,7 @@ class VersionInfo:
 
         Returns
         -------
-        str
+        :
             The enhanced version string with Git information when available.
         """
         set_version = self.version()

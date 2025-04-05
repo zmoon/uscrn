@@ -11,7 +11,7 @@ author = "zmoon"
 
 version = uscrn.__version__.split("+")[0]
 release = uscrn.__version__
-footer_version = VersionInfo(project).fancy_version()
+footer_version = VersionInfo(uscrn).fancy_version()
 
 extensions = [
     "sphinx.ext.autodoc",
