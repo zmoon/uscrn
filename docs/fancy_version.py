@@ -52,7 +52,12 @@ class GitInfo:
         return self.repo.as_posix()
 
     @staticmethod
-    def _find_git_repo(start_path: Path, /) -> Path:
+    @lru_cache(1)
+    def on_rtd() -> bool:
+        """Check if we are on ReadTheDocs."""
+        return os.environ.get("READTHEDOCS", "False") == "True"
+
+    def _find_git_repo(self, start_path: Path, /) -> Path:
         """Find the Git repository by walking up the directory tree.
 
         Parameters
@@ -65,7 +70,12 @@ class GitInfo:
         :
             Path to the Git repository root or the start path if no repo found.
         """
+        if self.on_rtd():
+            return Path(os.environ["READTHEDOCS_REPOSITORY_PATH"])
+
         for path in [start_path, *start_path.parents]:
+            if path.name == "site-packages":
+                break
             if (path / ".git").is_dir():
                 return path
 
@@ -78,7 +88,7 @@ class GitInfo:
         Returns
         -------
         :
-            The short commit hash or None if it couldn't be retrieved
+            The short commit hash or ``None`` if it couldn't be retrieved.
         """
         cmd = ["git", "-C", self.repo.as_posix(), "rev-parse", "--verify", "--short", "HEAD"]
         try:
@@ -95,14 +105,9 @@ class GitInfo:
         Parameters
         ----------
         commit
-            The commit hash.
+            The commit hash of interest.
         """
-        if self.on_rtd():
-            repo_path = Path(os.environ["READTHEDOCS_REPOSITORY_PATH"])
-        else:
-            repo_path = self.repo
-
-        cmd = ["git", "-C", repo_path.as_posix(), "show", "--no-patch", r"--format=%cI", commit]
+        cmd = ["git", "-C", self.repo.as_posix(), "show", "--no-patch", r"--format=%cI", commit]
         try:
             cp = subprocess.run(cmd, check=True, text=True, capture_output=True)
         except Exception:
@@ -149,12 +154,6 @@ class GitInfo:
 
         return result
 
-    @staticmethod
-    @lru_cache(1)
-    def on_rtd() -> bool:
-        """Check if we are on ReadTheDocs."""
-        return os.environ.get("READTHEDOCS", "False") == "True"
-
 
 class VersionInfo:
     """Class to handle version information for a package, including Git metadata.
@@ -176,9 +175,9 @@ class VersionInfo:
 
         spec = self.module.__spec__
         if spec is None:
-            raise RuntimeError(f"Module spec is None for module {self.module.__name__!r}.")
-        if not (spec.name == spec.parent == self.module.__name__):
-            raise ValueError(f"Module {self.module.__name__!r} is not a top-level module.")
+            raise RuntimeError(f"Module spec is None for module {self.package_name!r}.")
+        if not (spec.name == spec.parent == self.package_name):
+            raise ValueError(f"Module {self.package_name!r} is not a top-level module.")
 
         self.git_info = GitInfo(Path(inspect.getfile(self.module)).parent)
 
@@ -190,6 +189,7 @@ class VersionInfo:
 
     @property
     def package_name(self) -> str:
+        """The package name, which works for importing, e.g. 'numpy'."""
         return self.module.__name__
 
     def version(self) -> str:
