@@ -397,6 +397,7 @@ def get_data(
     years: int | Iterable[int] | None = None,
     which: Literal["subhourly", "hourly", "daily", "monthly"] = "daily",
     *,
+    station_id: str | Iterable[str] | None = None,
     n_jobs: int | None = -2,
     cat: bool = False,
     dropna: bool = False,
@@ -426,6 +427,9 @@ def get_data(
         If `which` is ``'monthly'``, `years` is ignored and you always get all available years.
     which
         Which dataset.
+    station_id
+        Site or sites (specified using USCRN station ID) to get data for.
+        Default is to get all sites.
     n_jobs
         Number of parallel joblib jobs to use for loading the individual files.
         The default is ``-2``, which means to use one less than joblib's detected max.
@@ -513,10 +517,28 @@ def get_data(
         urls = list(chain.from_iterable(pool.imap(get_year_urls, years_)))
         pool.close()
 
-    print(f"{len(urls)} files found")
-    print(urls[0])
-    print("...")
-    print(urls[-1])
+    if station_id is not None:
+        if isinstance(station_id, str):
+            station_id = [station_id]
+
+        meta = load_meta().query("station_id in @station_id")
+        if meta.empty:
+            raise ValueError("no site results")
+
+        site_ids = (
+            (meta.state + " " + meta.location + " " + meta.vector).str.replace(" ", "_").tolist()
+        )
+        rx = "|".join([re.escape(s) for s in site_ids])
+
+        urls = [url for url in urls if re.search(rx, url) is not None]
+
+    print(f"{len(urls)} file(s) found")
+    if len(urls) > 0:
+        print(urls[0])
+    if len(urls) > 2:
+        print("...")
+    if len(urls) > 1:
+        print(urls[-1])
 
     if _GET_CAP is not None:
         urls = urls[:_GET_CAP]

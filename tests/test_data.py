@@ -242,6 +242,16 @@ def test_get_years_default():
     assert unique_years[0] == 2000
 
 
+def test_get_one_site():
+    df = uscrn.get_data(2019, "daily", station_id="1045")  # Boulder
+    assert df.wban.nunique() == 1
+
+
+def test_get_two_sites():
+    df = uscrn.get_data(2019, "daily", station_id=["1045", "1109"])  # Boulder, Montrose
+    assert df.wban.nunique() == 2
+
+
 def test_get_nrt_m1_hourly():
     now = pd.Timestamp.now("UTC").tz_localize(None)
     df = get_nrt_data(-1, "hourly")
