@@ -12,9 +12,7 @@ author = "zmoon"
 
 version = uscrn.__version__.split("+")[0]
 release = uscrn.__version__
-footer_version = VersionInfo(uscrn).fancy_version(
-    commit_template=f'<a href="https://github.com/zmoon/{project}/tree/{{commit}}">{{commit}}</a>',
-)
+footer_version = VersionInfo(uscrn).fancy_version()
 
 extensions = [
     "sphinx.ext.autodoc",
