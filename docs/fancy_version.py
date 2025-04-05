@@ -14,6 +14,13 @@ from typing import NamedTuple
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "GitInfo",
+    "TagInfo",
+    "VersionInfo",
+    "logger",
+]
+
 
 class TagInfo(NamedTuple):
     name: str
