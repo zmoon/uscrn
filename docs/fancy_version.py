@@ -205,8 +205,18 @@ class VersionInfo:
         logger.debug(f"Package {self.package_name!r} detected version: {set_version}")
         return set_version
 
-    def fancy_version(self) -> str:
+    def fancy_version(
+        self,
+        *,
+        commit_template: str = "{commit}",
+    ) -> str:
         """Generate a fancy version string with Git information if available.
+
+        Parameters
+        ----------
+        commit_template
+            Template for the commit hash, to use with ``.format()``.
+            In case you want to style it, e.g. linking to GitHub.
 
         Returns
         -------
@@ -244,7 +254,7 @@ class VersionInfo:
                 logger.debug(f"Commit {commit} is tagged ({tag_info.name})")
                 return set_version
 
-        ver = f"{set_version}+{commit}"
+        ver = f"{set_version}+{commit_template.format(commit=commit)}"
         date = self.git_info.commit_date(commit)
         if date is not None:
             ver += f" ({date:%Y-%m-%d})"
