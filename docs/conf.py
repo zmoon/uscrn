@@ -1,4 +1,5 @@
 import uscrn
+from fancy_version import maybe_fancy_version
 
 project = "uscrn"
 copyright = "2023\u20132025"
@@ -6,7 +7,7 @@ author = "zmoon"
 
 version = uscrn.__version__.split("+")[0]
 release = uscrn.__version__
-footer_version = uscrn._util.maybe_fancy_version()
+footer_version = maybe_fancy_version()
 
 extensions = [
     "sphinx.ext.autodoc",
