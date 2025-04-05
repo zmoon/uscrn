@@ -161,6 +161,20 @@ class GitInfo:
 
         return result
 
+    def dirty(self) -> bool:
+        """Are there staged or unstaged changes?"""
+        if self.on_rtd():
+            return False
+
+        cmd = ["git", "-C", self.repo.as_posix(), "status", "--porcelain"]
+        try:
+            cp = subprocess.run(cmd, check=True, text=True, capture_output=True)
+        except Exception:
+            logger.exception("Could not get dirty status")
+            return False
+        else:
+            return cp.stdout.strip() != ""
+
 
 class VersionInfo:
     """Class to handle version information for a package, including Git metadata.
@@ -276,6 +290,8 @@ class VersionInfo:
         commit = self.git_info.current_commit()
         assert isinstance(commit, str)
         ver = f"{set_version}+{commit_template.format(commit=commit)}"
+        if self.git_info.dirty():
+            ver += "*"
         date = self.git_info.commit_date(commit)
         if date is not None:
             ver += f" ({date:%Y-%m-%d})"
