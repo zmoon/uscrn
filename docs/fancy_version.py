@@ -283,14 +283,16 @@ class VersionInfo:
     def fancy_version(
         self,
         *,
+        version_template: str = "{version}",
         commit_template: str = "{commit}",
     ) -> str:
         """Generate a fancy version string with Git information if available.
 
         Parameters
         ----------
-        commit_template
-            Template for the commit hash, to use with ``.format()``.
+        version_template, commit_template
+            Templates for the set package version and commit hash,
+            to use with ``.format()``.
             In case you want to style it, e.g. linking to GitHub.
 
         Returns
@@ -298,7 +300,7 @@ class VersionInfo:
         :
             The enhanced version string with Git information when available.
         """
-        set_version = self.version()
+        set_version = version_template.format(version=self.version())
 
         on_tag = self.on_tag()
         if on_tag or on_tag is None:
