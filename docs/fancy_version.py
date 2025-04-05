@@ -175,8 +175,10 @@ class VersionInfo:
             raise TypeError(f"Package must be a string or a module object. Got {type(package)}.")
 
         spec = self.module.__spec__
-        assert spec is not None
-        assert spec.name == spec.parent == self.module.__name__
+        if spec is None:
+            raise RuntimeError(f"Module spec is None for module {self.module.__name__!r}.")
+        if not (spec.name == spec.parent == self.module.__name__):
+            raise ValueError(f"Module {self.module.__name__!r} is not a top-level module.")
 
         self.git_info = GitInfo(Path(inspect.getfile(self.module)).parent)
 

@@ -1,8 +1,9 @@
+import os
 import sys
 
 import uscrn
 
-sys.path.insert(0, ".")
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from fancy_version import VersionInfo
 
 project = "uscrn"
