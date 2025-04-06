@@ -261,9 +261,11 @@ class VersionInfo:
     def on_tag(self) -> bool | None:
         """Are we a tagged commit? Or ``None`` if can't determine."""
         if self.git_info.on_rtd():
+            # Shortcut for a tag that has been deployed as a docs version on RTD
             rtd_git_id = os.environ["READTHEDOCS_GIT_IDENTIFIER"]
             logger.debug(f"READTHEDOCS_GIT_IDENTIFIER: {rtd_git_id}")
-            return rtd_git_id == self.version()
+            if rtd_git_id == self.version():
+                return True
 
         tags = self.git_info.tags()
         if tags is None:
