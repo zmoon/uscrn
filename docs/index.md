@@ -11,8 +11,9 @@
 :hidden:
 
 examples/daily.ipynb
-examples/stations.ipynb
 examples/nrt.ipynb
+examples/stations.ipynb
+examples/select-sites.ipynb
 ```
 
 ```{toctree}
