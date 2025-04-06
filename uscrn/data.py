@@ -523,7 +523,7 @@ def get_data(
 
         meta = load_meta().query("station_id in @station_id")
         if meta.empty:
-            raise ValueError("no site results")
+            raise ValueError(f"no site results for {station_id=}")
 
         site_ids = (
             (meta.state + " " + meta.location + " " + meta.vector).str.replace(" ", "_").tolist()

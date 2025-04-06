@@ -248,7 +248,7 @@ def test_get_one_site():
 
 
 def test_get_one_site_bad():
-    with pytest.raises(ValueError, match="no site results"):
+    with pytest.raises(ValueError, match=r"no site results for station_id=\['asdf'\]"):
         _ = uscrn.get_data(2019, "daily", station_id="asdf")
 
 
