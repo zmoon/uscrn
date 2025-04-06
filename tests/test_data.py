@@ -247,6 +247,11 @@ def test_get_one_site():
     assert df.wban.nunique() == 1
 
 
+def test_get_one_site_bad():
+    with pytest.raises(ValueError, match="no site results"):
+        _ = uscrn.get_data(2019, "daily", station_id="asdf")
+
+
 def test_get_two_sites():
     df = uscrn.get_data(2019, "daily", station_id=["1045", "1109"])  # Boulder, Montrose
     assert df.wban.nunique() == 2

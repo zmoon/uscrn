@@ -1028,7 +1028,7 @@ def to_xarray(
         def func(x):
             assert x.ndim == 1
             inds = np.where(~np.isnan(x))[0]
-            if len(inds) == 0:
+            if len(inds) == 0:  # pragma: no cover
                 warnings.warn(f"{da.name} all NaN for certain site")
                 return np.nan
             else:
