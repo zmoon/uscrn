@@ -493,13 +493,13 @@ def get_data(
         else:
             years_ = list(years)
             if len(years_) == 0:
-                raise ValueError("years should not be empty")
+                raise ValueError("`years` should not be empty.")
 
         @retry
         def get_year_urls(year):
             if year not in available_years:
                 raise ValueError(
-                    f"year {year} not in detected available USCRN years {available_years}"
+                    f"Year {year} not in detected available USCRN years {available_years}"
                 )
 
             # Get filenames from the year page
@@ -509,7 +509,7 @@ def get_data(
             r.raise_for_status()
             fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
             if not fns:  # pragma: no cover
-                warnings.warn(f"no USCRN files found for year {year} (url {url})", stacklevel=2)
+                warnings.warn(f"No USCRN files found for year {year} (url {url})", stacklevel=2)
 
             return (f"{base_url}/{year}/{fn}" for fn in fns)
 
@@ -523,7 +523,7 @@ def get_data(
 
         meta = load_meta().query("station_id in @station_id")
         if meta.empty:
-            raise ValueError(f"no site results for {station_id=}")
+            raise ValueError(f"No site results for {station_id=}")
 
         site_ids = (
             (meta.state + " " + meta.location + " " + meta.vector).str.replace(" ", "_").tolist()
@@ -533,7 +533,7 @@ def get_data(
         urls = [url for url in urls if re.search(rx, url) is not None]
 
     if not urls:
-        raise ValueError(f"no files found for {years=}, {which=}, {station_id=}")
+        raise RuntimeError(f"No files found for {years=}, {which=}, {station_id=}")
 
     print(f"{len(urls)} file(s) found")
     if len(urls) > 0:
@@ -796,7 +796,7 @@ def get_nrt_data(
     def get_year_urls(year):
         if year not in available_years:
             raise ValueError(
-                f"year {year} not in detected available USCRN years {available_years}"
+                f"Year {year} not in detected available USCRN years {available_years}."
             )  # pragma: no cover
 
         # Get filenames from the year page
@@ -806,7 +806,7 @@ def get_nrt_data(
         r.raise_for_status()
         fns = re.findall(r">(CRN[a-zA-Z0-9\-_]*\.txt)<", r.text)
         if not fns:  # pragma: no cover
-            warnings.warn(f"no USCRN files found for year {year} (url {url})", stacklevel=2)
+            warnings.warn(f"No USCRN files found for year {year} (url {url}).", stacklevel=2)
 
         return (f"{base_url}/updates/{year}/{fn}" for fn in fns)
 
@@ -878,7 +878,7 @@ def get_nrt_data(
     # TODO: warn if period bounds are outside what is available?
 
     if len(urls) == 0:
-        raise RuntimeError(f"No files identified for the specified period {period!r}")
+        raise RuntimeError(f"No files identified for the specified period {period!r}.")
 
     print(f"Found {len(urls)} file(s) to load")
     if len(urls) > 0:
@@ -1017,7 +1017,7 @@ def to_xarray(
         attrs = var_attrs.get(vn)
         if attrs is None:
             if vn not in {"time", "depth"}:  # pragma: no cover
-                warnings.warn(f"no attrs for {vn}")
+                warnings.warn(f"No attrs for {vn}")
             continue
         attrs_ = {
             k: attrs[k] for k in ["long_name", "units", "description"] if attrs[k] is not None

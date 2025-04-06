@@ -227,10 +227,10 @@ def test_get(which):
 
 
 def test_get_bad_year():
-    with pytest.raises(ValueError, match="^year 1900 not in detected available USCRN years"):
+    with pytest.raises(ValueError, match="^Year 1900 not in detected available USCRN years"):
         get_data(1900)
 
-    with pytest.raises(ValueError, match="^years should not be empty"):
+    with pytest.raises(ValueError, match="^`years` should not be empty"):
         get_data([])
 
 
@@ -248,13 +248,13 @@ def test_get_one_site():
 
 
 def test_get_one_site_bad():
-    with pytest.raises(ValueError, match=r"no site results for station_id=\['asdf'\]"):
+    with pytest.raises(ValueError, match=r"^No site results for station_id=\['asdf'\]"):
         _ = uscrn.get_data(2019, "daily", station_id="asdf")
 
 
 def test_get_one_site_inactive():
     with pytest.raises(
-        ValueError, match=r"no files found for years=2019, which='daily', station_id=\['1147'\]"
+        RuntimeError, match=r"^No files found for years=2019, which='daily', station_id=\['1147'\]"
     ):
         _ = uscrn.get_data(2019, "daily", station_id="1147")  # ATDD test site
 
