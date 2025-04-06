@@ -252,6 +252,13 @@ def test_get_one_site_bad():
         _ = uscrn.get_data(2019, "daily", station_id="asdf")
 
 
+def test_get_one_site_inactive():
+    with pytest.raises(
+        ValueError, match=r"no files found for years=2019, which='daily', station_id=\['1147'\]"
+    ):
+        _ = uscrn.get_data(2019, "daily", station_id="1147")  # ATDD test site
+
+
 def test_get_two_sites():
     df = uscrn.get_data(2019, "daily", station_id=["1045", "1109"])  # Boulder, Montrose
     assert df.wban.nunique() == 2

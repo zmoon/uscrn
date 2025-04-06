@@ -532,6 +532,9 @@ def get_data(
 
         urls = [url for url in urls if re.search(rx, url) is not None]
 
+    if not urls:
+        raise ValueError(f"no files found for {years=}, {which=}, {station_id=}")
+
     print(f"{len(urls)} file(s) found")
     if len(urls) > 0:
         print(urls[0])
