@@ -401,6 +401,7 @@ def get_data(
     n_jobs: int | None = -2,
     cat: bool = False,
     dropna: bool = False,
+    apply_qc: bool = True,
 ) -> pd.DataFrame:
     """Get USCRN archive data.
 
@@ -437,6 +438,9 @@ def get_data(
         Convert some columns to pandas categorical type.
     dropna
         Drop rows where all data cols are missing data.
+    apply_qc
+        Apply the QC flags, masking non-"good" data with NaN.
+        Only impacts subhourly and hourly data.
 
     See Also
     --------
@@ -560,6 +564,14 @@ def get_data(
     dfs = Parallel(n_jobs=n_jobs, verbose=10)(delayed(read)(url) for url in urls)
 
     df = pd.concat(dfs, axis="index", ignore_index=True, copy=False)
+
+    if apply_qc:
+        for col in df.columns:
+            flag_col = stored_attrs[which]["columns"][col]["flag_name"]
+            if flag_col is None:
+                continue
+            good = df[flag_col] == "0"
+            df.loc[~good, col] = np.nan
 
     # Drop rows where all data cols are missing data?
     non_data_col_cands = [
