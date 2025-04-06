@@ -160,7 +160,7 @@ subhourly:
       units: m s-1
       description: Average wind speed, in meters per second, at a height of 1.5 meters.
     - name: wind_flag
-      long_name: QC flag for 5-min average wind speed
+      long_name: QC flag for 5-min average wind speed at 1.5 m
       units: null
       description: >-
         QC flag for the wind speed measurement.

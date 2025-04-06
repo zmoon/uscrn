@@ -155,6 +155,20 @@ def load_attrs() -> dict[str, dict[str, Any]]:
             if "categories" not in v:
                 v["categories"] = False
 
+    # flag_name defaults to None
+    pref = "QC flag for "
+    for which in WHICHS:
+        for _, v in attrs[which]["columns"].items():
+            v["flag_name"] = None
+
+        long_name_to_name = {v["long_name"]: k for k, v in attrs[which]["columns"].items()}
+        flag_names = [name for name in attrs[which]["columns"] if name.endswith("_flag")]
+        for flag_name in flag_names:
+            flag_long_name = attrs[which]["columns"][flag_name]["long_name"]
+            assert flag_long_name.startswith(pref)
+            flag_for = long_name_to_name[flag_long_name[len(pref) :]]
+            attrs[which]["columns"][flag_for]["flag_name"] = flag_name
+
     return attrs
 
 
