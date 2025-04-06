@@ -95,6 +95,8 @@ def test_load_attrs():
                 "dtype",
                 "categories",
                 "xarray_only",
+                "qc_flag_name",
+                "type_flag_name",
             }
 
 

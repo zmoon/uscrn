@@ -155,6 +155,46 @@ def load_attrs() -> dict[str, dict[str, Any]]:
             if "categories" not in v:
                 v["categories"] = False
 
+    # QC flag name defaults to None
+    # (only for selected variables in subhourly and hourly data)
+    pref = "QC flag for "
+    for which in WHICHS:
+        for _, v in attrs[which]["columns"].items():
+            v["qc_flag_name"] = None
+
+        long_name_to_name = {v["long_name"]: k for k, v in attrs[which]["columns"].items()}
+        flag_names = [name for name in attrs[which]["columns"] if name.endswith("_flag")]
+        for flag_name in flag_names:
+            flag_long_name = attrs[which]["columns"][flag_name]["long_name"]
+            assert flag_long_name.startswith(pref)
+            flag_for = long_name_to_name[flag_long_name[len(pref) :]]
+            attrs[which]["columns"][flag_for]["qc_flag_name"] = flag_name
+
+    # type flag name defaults to None
+    # (only for infrared surface temperature)
+    for which in WHICHS:
+        for _, v in attrs[which]["columns"].items():
+            v["type_flag_name"] = None
+
+        if which == "subhourly":
+            flag_names = ["st_type"]
+            flag_fors = ["surface_temperature"]
+        else:
+            pref = "sur_temp"
+            flag_fors = [
+                name
+                for name in attrs[which]["columns"]
+                if name.startswith(pref) and not name.endswith(("_flag", "_type"))
+            ]
+            assert len(flag_fors) == 3
+            flag_name = pref + ("" if which == "hourly" else f"_{which}") + "_type"
+            flag_names = [flag_name] * len(flag_fors)
+
+        for flag_name, flag_for in zip(flag_names, flag_fors):
+            assert flag_name in attrs[which]["columns"]
+            assert flag_for in attrs[which]["columns"]
+            attrs[which]["columns"][flag_for]["type_flag_name"] = flag_name
+
     return attrs
 
 

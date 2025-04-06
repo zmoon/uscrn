@@ -393,14 +393,25 @@ def read(fp, *, cat: bool = False) -> pd.DataFrame:
         return _which_to_reader[res.which](fp, cat=cat)
 
 
+def _choose_n_jobs(n_tasks: int) -> int:
+    from joblib import cpu_count
+
+    cpus = cpu_count()
+    if cpus > 2:
+        cpus -= 1
+
+    return min(cpus, n_tasks)
+
+
 def get_data(
     years: int | Iterable[int] | None = None,
     which: Literal["subhourly", "hourly", "daily", "monthly"] = "daily",
     *,
     station_id: str | Iterable[str] | None = None,
-    n_jobs: int | None = -2,
     cat: bool = False,
     dropna: bool = False,
+    apply_qc: bool = True,
+    n_jobs: int | None = None,
 ) -> pd.DataFrame:
     """Get USCRN archive data.
 
@@ -430,13 +441,16 @@ def get_data(
     station_id
         Site or sites (specified using USCRN station ID) to get data for.
         Default is to get all sites.
-    n_jobs
-        Number of parallel joblib jobs to use for loading the individual files.
-        The default is ``-2``, which means to use one less than joblib's detected max.
     cat
         Convert some columns to pandas categorical type.
     dropna
         Drop rows where all data cols are missing data.
+    apply_qc
+        Apply the QC flags, masking non-"good" data with NaN.
+        This only impacts subhourly and hourly data, and only certain variables.
+    n_jobs
+        Number of parallel joblib jobs to use for loading the individual files.
+        The default is to use ``min(joblib.cpu_count() - 1, num_files)``.
 
     See Also
     --------
@@ -557,9 +571,20 @@ def get_data(
 
     print("Reading files...")
     read = _which_to_reader[which]
+    if n_jobs is None:
+        n_jobs = _choose_n_jobs(len(urls))
     dfs = Parallel(n_jobs=n_jobs, verbose=10)(delayed(read)(url) for url in urls)
 
     df = pd.concat(dfs, axis="index", ignore_index=True, copy=False)
+
+    # Apply QC flags?
+    if apply_qc:
+        for col in df.columns:
+            flag_col = stored_attrs[which]["columns"][col]["qc_flag_name"]
+            if flag_col is None:
+                continue
+            good = df[flag_col] == "0"
+            df.loc[~good, col] = np.nan
 
     # Drop rows where all data cols are missing data?
     non_data_col_cands = [
@@ -610,8 +635,9 @@ def get_nrt_data(
     period: Any | tuple[Any, Any],
     which: Literal["hourly", "daily"] = "hourly",
     *,
-    n_jobs: int | None = None,
     cat: bool = False,
+    apply_qc: bool = True,
+    n_jobs: int | None = None,
 ) -> pd.DataFrame:
     """Get USCRN near-real-time data.
 
@@ -651,11 +677,14 @@ def get_nrt_data(
     which
         Which dataset.
         Only hourly and daily are available.
+    cat
+        Convert some columns to pandas categorical type.
+    apply_qc
+        Apply the QC flags, masking non-"good" data with NaN.
+        This only impacts hourly data, and only certain variables.
     n_jobs
         Number of parallel joblib jobs to use for loading the individual files.
         The default is to use ``min(joblib.cpu_count() - 1, num_files)``.
-    cat
-        Convert some columns to pandas categorical type.
 
     Examples
     --------
@@ -726,7 +755,7 @@ def get_nrt_data(
     from urllib.parse import urlsplit
 
     import requests
-    from joblib import Parallel, cpu_count, delayed
+    from joblib import Parallel, delayed
 
     from .attrs import get_col_info, load_attrs
 
@@ -897,10 +926,19 @@ def get_nrt_data(
 
     print("Reading files...")
     if n_jobs is None:
-        n_jobs = min(cpu_count() - 1, len(urls))
+        n_jobs = _choose_n_jobs(len(urls))
     dfs = Parallel(n_jobs=n_jobs, verbose=10)(delayed(read)(url) for url in urls)
 
     df = pd.concat(dfs, axis="index", ignore_index=True, copy=False)
+
+    # Apply QC flags?
+    if apply_qc:
+        for col in df.columns:
+            flag_col = stored_attrs[which]["columns"][col]["qc_flag_name"]
+            if flag_col is None:
+                continue
+            good = df[flag_col] == "0"
+            df.loc[~good, col] = np.nan
 
     # Category cols?
     if cat:
