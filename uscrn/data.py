@@ -440,7 +440,7 @@ def get_data(
         Drop rows where all data cols are missing data.
     apply_qc
         Apply the QC flags, masking non-"good" data with NaN.
-        Only impacts subhourly and hourly data.
+        This only impacts subhourly and hourly data, and only certain variables.
 
     See Also
     --------
