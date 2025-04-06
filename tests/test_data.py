@@ -227,10 +227,10 @@ def test_get(which):
 
 
 def test_get_bad_year():
-    with pytest.raises(ValueError, match="^year 1900 not in detected available USCRN years"):
+    with pytest.raises(ValueError, match="^Year 1900 not in detected available USCRN years"):
         get_data(1900)
 
-    with pytest.raises(ValueError, match="^years should not be empty"):
+    with pytest.raises(ValueError, match="^`years` should not be empty"):
         get_data([])
 
 
@@ -240,6 +240,28 @@ def test_get_years_default():
     unique_years = df["lst_date"].dt.year.unique()
     assert unique_years.size == 1
     assert unique_years[0] == 2000
+
+
+def test_get_one_site():
+    df = uscrn.get_data(2019, "daily", station_id="1045")  # Boulder
+    assert df.wban.nunique() == 1
+
+
+def test_get_one_site_bad():
+    with pytest.raises(ValueError, match=r"^Invalid station ID\(s\): \['asdf'\]"):
+        _ = uscrn.get_data(2019, "daily", station_id="asdf")
+
+
+def test_get_one_site_inactive():
+    with pytest.raises(
+        RuntimeError, match=r"^No files found for years=2019, which='daily', station_id=\['1147'\]"
+    ):
+        _ = uscrn.get_data(2019, "daily", station_id="1147")  # ATDD test site
+
+
+def test_get_two_sites():
+    df = uscrn.get_data(2019, "daily", station_id=["1045", "1109"])  # Boulder, Montrose
+    assert df.wban.nunique() == 2
 
 
 def test_get_nrt_m1_hourly():
