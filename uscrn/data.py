@@ -565,9 +565,10 @@ def get_data(
 
     df = pd.concat(dfs, axis="index", ignore_index=True, copy=False)
 
+    # Apply QC flags?
     if apply_qc:
         for col in df.columns:
-            flag_col = stored_attrs[which]["columns"][col]["flag_name"]
+            flag_col = stored_attrs[which]["columns"][col]["qc_flag_name"]
             if flag_col is None:
                 continue
             good = df[flag_col] == "0"
