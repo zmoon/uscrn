@@ -521,12 +521,19 @@ def get_data(
         if isinstance(station_id, str):
             station_id = [station_id]
 
-        meta = load_meta().query("station_id in @station_id")
-        if meta.empty:
-            raise ValueError(f"No site results for {station_id=}")
+        meta = load_meta()
 
+        all_station_ids = set(meta.station_id)
+        invalid_station_ids = [s for s in station_id if s not in all_station_ids]
+        if invalid_station_ids:
+            raise ValueError(
+                f"Invalid station ID(s): {invalid_station_ids}. "
+                "Note that they are strings, not integers."
+            )
+
+        sel = meta.query("station_id in @station_id")
         site_ids = (
-            (meta.state + " " + meta.location + " " + meta.vector).str.replace(" ", "_").tolist()
+            (sel.state + " " + sel.location + " " + sel.vector).str.replace(" ", "_").tolist()
         )
         rx = "|".join([re.escape(s) for s in site_ids])
 
