@@ -398,10 +398,10 @@ def get_data(
     which: Literal["subhourly", "hourly", "daily", "monthly"] = "daily",
     *,
     station_id: str | Iterable[str] | None = None,
-    n_jobs: int | None = -2,
     cat: bool = False,
     dropna: bool = False,
     apply_qc: bool = True,
+    n_jobs: int | None = -2,
 ) -> pd.DataFrame:
     """Get USCRN archive data.
 
@@ -431,9 +431,6 @@ def get_data(
     station_id
         Site or sites (specified using USCRN station ID) to get data for.
         Default is to get all sites.
-    n_jobs
-        Number of parallel joblib jobs to use for loading the individual files.
-        The default is ``-2``, which means to use one less than joblib's detected max.
     cat
         Convert some columns to pandas categorical type.
     dropna
@@ -441,6 +438,9 @@ def get_data(
     apply_qc
         Apply the QC flags, masking non-"good" data with NaN.
         This only impacts subhourly and hourly data, and only certain variables.
+    n_jobs
+        Number of parallel joblib jobs to use for loading the individual files.
+        The default is ``-2``, which means to use one less than joblib's detected max.
 
     See Also
     --------
@@ -623,8 +623,8 @@ def get_nrt_data(
     period: Any | tuple[Any, Any],
     which: Literal["hourly", "daily"] = "hourly",
     *,
-    n_jobs: int | None = None,
     cat: bool = False,
+    n_jobs: int | None = None,
 ) -> pd.DataFrame:
     """Get USCRN near-real-time data.
 
@@ -664,11 +664,11 @@ def get_nrt_data(
     which
         Which dataset.
         Only hourly and daily are available.
+    cat
+        Convert some columns to pandas categorical type.
     n_jobs
         Number of parallel joblib jobs to use for loading the individual files.
         The default is to use ``min(joblib.cpu_count() - 1, num_files)``.
-    cat
-        Convert some columns to pandas categorical type.
 
     Examples
     --------
