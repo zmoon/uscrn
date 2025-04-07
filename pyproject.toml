@@ -22,6 +22,7 @@ dependencies = [
 [project.urls]
 Home = "https://github.com/zmoon/uscrn"
 Source = "https://github.com/zmoon/uscrn"
+Documentation = "https://uscrn.readthedocs.io"
 
 [project.optional-dependencies]
 test = [
