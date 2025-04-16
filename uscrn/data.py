@@ -166,7 +166,7 @@ def read_subhourly(fp, *, cat: bool = False) -> pd.DataFrame:
     df[sm_cols] = df[sm_cols].replace(-99, np.nan)
 
     # Unknown datalogger version
-    df["crx_vn"] = df["crx_vn"].replace("-9.000", np.nan)
+    df["crx_vn"] = df["crx_vn"].replace("-9.000", np.nan).astype(object)
 
     # Lower precision floats
     cols = ["wind_1_5"]
@@ -220,7 +220,7 @@ def read_hourly(fp, *, cat: bool = False, **kwargs) -> pd.DataFrame:
     df[sm_cols] = df[sm_cols].replace(-99, np.nan)
 
     # Unknown datalogger version
-    df["crx_vn"] = df["crx_vn"].replace("-9.000", np.nan)
+    df["crx_vn"] = df["crx_vn"].replace("-9.000", np.nan).astype(object)
 
     # Category cols?
     if cat:
@@ -284,7 +284,7 @@ def read_daily(fp, *, cat: bool = False, **kwargs) -> pd.DataFrame:
     df[sm_cols] = df[sm_cols].replace(-99, np.nan)
 
     # Unknown datalogger version
-    df["crx_vn"] = df["crx_vn"].replace("-9.000", np.nan)
+    df["crx_vn"] = df["crx_vn"].replace("-9.000", np.nan).astype(object)
 
     # Category cols?
     if cat:
@@ -345,7 +345,7 @@ def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
     df[sm_cols] = df[sm_cols].replace(-99, np.nan)
 
     # Unknown datalogger version
-    df["crx_vn"] = df["crx_vn"].replace("-9.000", np.nan)
+    df["crx_vn"] = df["crx_vn"].replace("-9.000", np.nan).astype(object)
 
     # Category cols?
     if cat:
