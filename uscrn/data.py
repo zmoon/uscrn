@@ -148,7 +148,7 @@ def read_subhourly(fp, *, cat: bool = False) -> pd.DataFrame:
     col_info = get_col_info("subhourly")
     dtype = col_info.dtypes.copy()
     for col in ["utc_date", "utc_time", "lst_date", "lst_time"]:
-        dtype[col] = str
+        dtype[col] = np.dtype(str)
     df = pd.read_csv(
         fp,
         sep=r"\s+",
@@ -201,7 +201,7 @@ def read_hourly(fp, *, cat: bool = False, **kwargs) -> pd.DataFrame:
     col_info = get_col_info("hourly")
     dtype = col_info.dtypes.copy()
     for col in ["utc_date", "utc_time", "lst_date", "lst_time"]:
-        dtype[col] = str
+        dtype[col] = np.dtype(str)
     df = pd.read_csv(
         fp,
         sep=r"\s+",

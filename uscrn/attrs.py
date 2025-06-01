@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Hashable, Mapping
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Final, Literal, NamedTuple
 
 import numpy as np
+from numpy.typing import DTypeLike
 
 HERE = Path(__file__).parent
 _CACHE_DIR = HERE / "cache"
@@ -202,7 +203,7 @@ class _DsetVarInfo(NamedTuple):
     names: list[str]
     """Column (variable) names, in the correct order."""
 
-    dtypes: dict[str, Any]  # TODO: better typing
+    dtypes: dict[Hashable, np.dtype[np.generic]]
     """Maps column names to dtypes, for use in pandas ``read_csv``."""
 
     attrs: dict[str, dict[str, str | None]]
@@ -215,7 +216,7 @@ class _DsetVarInfo(NamedTuple):
     """Maps applicable column names to list of categories."""
 
 
-_DTYPE_MAP = {
+_DTYPE_MAP: dict[str, DTypeLike | None] = {
     "string": str,
     "float": np.float32,
     "float32": np.float32,
@@ -224,7 +225,7 @@ _DTYPE_MAP = {
 }
 
 
-def _map_dtype(dtype: str) -> type | None:
+def _map_dtype(dtype: str) -> DTypeLike | None:
     if dtype not in _DTYPE_MAP:
         raise ValueError(f"Unknown dtype: {dtype!r}. Expected one of: {list(_DTYPE_MAP)}")
     return _DTYPE_MAP[dtype]
@@ -297,11 +298,12 @@ def get_col_info(
         raise AssertionError("Expected readme line starting with 'IMPORTANT NOTES:'")
 
     # Construct dtype dict (for ``read_csv``)
-    dtypes: dict[str, Any] = {}
+    dtypes: dict[Hashable, np.dtype[np.generic]] = {}
     for k, v in attrs.items():
+        assert isinstance(k, str)
         dtype = _map_dtype(v["dtype"])
         if dtype is not None:
-            dtypes[k] = dtype
+            dtypes[k] = np.dtype(dtype)
 
     # Categorical dtype categories
     categorical = {k: v["categories"] for k, v in attrs.items() if v["categories"] is not False}
