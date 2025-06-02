@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Final, Literal, NamedTuple
+from typing import Any, Final, Literal, NamedTuple, Union
 
 import numpy as np
 
@@ -198,7 +198,7 @@ def load_attrs() -> dict[str, dict[str, Any]]:
     return attrs
 
 
-_DTypes = type[np.float32] | type[np.float64] | type[str]
+_DTypes = Union[type[np.float32], type[np.float64], type[str]]
 
 
 class _DsetVarInfo(NamedTuple):
