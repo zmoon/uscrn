@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Hashable, Mapping
+from collections.abc import Mapping
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Final, Literal, NamedTuple
+from typing import Any, Final, Literal, NamedTuple, TypeAlias
 
 import numpy as np
-from numpy.typing import DTypeLike
 
 HERE = Path(__file__).parent
 _CACHE_DIR = HERE / "cache"
@@ -199,11 +198,14 @@ def load_attrs() -> dict[str, dict[str, Any]]:
     return attrs
 
 
+_DTypes: TypeAlias = type[np.float32] | type[np.float64] | type[str]
+
+
 class _DsetVarInfo(NamedTuple):
     names: list[str]
     """Column (variable) names, in the correct order."""
 
-    dtypes: dict[Hashable, np.dtype[np.generic]]
+    dtypes: dict[str, _DTypes]
     """Maps column names to dtypes, for use in pandas ``read_csv``."""
 
     attrs: dict[str, dict[str, str | None]]
@@ -216,7 +218,7 @@ class _DsetVarInfo(NamedTuple):
     """Maps applicable column names to list of categories."""
 
 
-_DTYPE_MAP: dict[str, DTypeLike | None] = {
+_DTYPE_MAP: dict[str, _DTypes | None] = {
     "string": str,
     "float": np.float32,
     "float32": np.float32,
@@ -225,7 +227,7 @@ _DTYPE_MAP: dict[str, DTypeLike | None] = {
 }
 
 
-def _map_dtype(dtype: str) -> DTypeLike | None:
+def _map_dtype(dtype: str) -> _DTypes | None:
     if dtype not in _DTYPE_MAP:
         raise ValueError(f"Unknown dtype: {dtype!r}. Expected one of: {list(_DTYPE_MAP)}")
     return _DTYPE_MAP[dtype]
@@ -298,12 +300,12 @@ def get_col_info(
         raise AssertionError("Expected readme line starting with 'IMPORTANT NOTES:'")
 
     # Construct dtype dict (for ``read_csv``)
-    dtypes: dict[Hashable, np.dtype[np.generic]] = {}
+    dtypes: dict[str, _DTypes] = {}
     for k, v in attrs.items():
         assert isinstance(k, str)
         dtype = _map_dtype(v["dtype"])
         if dtype is not None:
-            dtypes[k] = np.dtype(dtype)
+            dtypes[k] = dtype
 
     # Categorical dtype categories
     categorical = {k: v["categories"] for k, v in attrs.items() if v["categories"] is not False}

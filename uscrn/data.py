@@ -6,14 +6,15 @@ from __future__ import annotations
 
 import datetime
 import warnings
-from collections.abc import Iterable
-from typing import Any, Literal, NamedTuple
+from collections.abc import Hashable, Iterable, Mapping
+from typing import Any, Literal, NamedTuple, cast
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 
 from ._util import retry
+from .attrs import _DTypes
 
 _GET_CAP: int | None = None
 """Restrict how many files to load, for testing purposes."""
@@ -148,13 +149,13 @@ def read_subhourly(fp, *, cat: bool = False) -> pd.DataFrame:
     col_info = get_col_info("subhourly")
     dtype = col_info.dtypes.copy()
     for col in ["utc_date", "utc_time", "lst_date", "lst_time"]:
-        dtype[col] = np.dtype(str)
+        dtype[col] = str
     df = pd.read_csv(
         fp,
         sep=r"\s+",
         header=None,
         names=col_info.names,
-        dtype=dtype,
+        dtype=cast(Mapping[Hashable, _DTypes], dtype),
         na_values=["-99999", "-9999"],
     )
     df["utc_time"] = pd.to_datetime(df["utc_date"] + df["utc_time"], format=r"%Y%m%d%H%M")
@@ -201,13 +202,13 @@ def read_hourly(fp, *, cat: bool = False, **kwargs) -> pd.DataFrame:
     col_info = get_col_info("hourly")
     dtype = col_info.dtypes.copy()
     for col in ["utc_date", "utc_time", "lst_date", "lst_time"]:
-        dtype[col] = np.dtype(str)
+        dtype[col] = str
     df = pd.read_csv(
         fp,
         sep=r"\s+",
         header=None,
         names=col_info.names,
-        dtype=dtype,
+        dtype=cast(Mapping[Hashable, _DTypes], dtype),
         na_values=["-99999", "-9999"],
         **kwargs,
     )
@@ -272,7 +273,7 @@ def read_daily(fp, *, cat: bool = False, **kwargs) -> pd.DataFrame:
         sep=r"\s+",
         header=None,
         names=col_info.names,
-        dtype=col_info.dtypes,
+        dtype=cast(Mapping[Hashable, _DTypes], col_info.dtypes),
         parse_dates=["lst_date"],
         date_format=r"%Y%m%d",
         na_values=["-99999", "-9999"],
@@ -334,7 +335,7 @@ def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
         sep=r"\s+",
         header=None,
         names=col_info.names,
-        dtype=col_info.dtypes,
+        dtype=cast(Mapping[Hashable, _DTypes], col_info.dtypes),
         parse_dates=["lst_yrmo"],
         date_format=r"%Y%m",
         na_values=["-99999", "-9999"],
