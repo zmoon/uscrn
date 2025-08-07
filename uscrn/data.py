@@ -53,7 +53,7 @@ def load_meta(*, cat: bool = False) -> pd.DataFrame:
         for col in ["status", "operation", "network"]:
             df[col] = df[col].astype("category")
 
-    df.attrs.update(created=now)
+    df.attrs["created"] = now
 
     return df
 
@@ -178,7 +178,7 @@ def read_subhourly(fp, *, cat: bool = False) -> pd.DataFrame:
         for col, cats in col_info.categorical.items():
             df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
-    df.attrs.update(which="subhourly")
+    df.attrs["which"] = "subhourly"
 
     return df
 
@@ -228,7 +228,7 @@ def read_hourly(fp, *, cat: bool = False, **kwargs) -> pd.DataFrame:
         for col, cats in col_info.categorical.items():
             df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
-    df.attrs.update(which="hourly")
+    df.attrs["which"] = "hourly"
 
     return df
 
@@ -292,7 +292,7 @@ def read_daily(fp, *, cat: bool = False, **kwargs) -> pd.DataFrame:
         for col, cats in col_info.categorical.items():
             df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
-    df.attrs.update(which="daily")
+    df.attrs["which"] = "daily"
 
     return df
 
@@ -353,7 +353,7 @@ def read_monthly(fp, *, cat: bool = False) -> pd.DataFrame:
         for col, cats in col_info.categorical.items():
             df[col] = df[col].astype(pd.CategoricalDtype(categories=cats, ordered=False))
 
-    df.attrs.update(which="monthly")
+    df.attrs["which"] = "monthly"
 
     return df
 
