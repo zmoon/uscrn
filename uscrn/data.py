@@ -498,7 +498,11 @@ def get_data(
         # Year subdirectories
         from multiprocessing.pool import ThreadPool
 
-        available_years: list[int] = [int(s) for s in re.findall(r">([0-9]{4})/?<", main_list_page)]
+        available_years: list[int] = [
+            int(s) for s in re.findall(r'href="([0-9]{4})">\1/?<', main_list_page)
+        ]
+        if not available_years:  # pragma: no cover
+            raise RuntimeError(f"Detecting available years from {base_url}/ failed.")
 
         years_: list[int]
         if isinstance(years, int):
@@ -827,7 +831,11 @@ def get_nrt_data(
 
     main_list_page = get_main_list_page()
 
-    available_years: list[int] = [int(s) for s in re.findall(r">([0-9]{4})/?<", main_list_page)]
+    available_years: list[int] = [
+        int(s) for s in re.findall(r'href="([0-9]{4})">\1/?<', main_list_page)
+    ]
+    if not available_years:  # pragma: no cover
+        raise RuntimeError(f"Detecting available years from {base_url}/ failed.")
 
     @retry
     def get_year_urls(year):
